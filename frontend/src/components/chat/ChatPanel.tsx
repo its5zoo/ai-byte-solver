@@ -12,14 +12,12 @@ interface Message {
   createdAt?: string;
 }
 
-interface ChatPanelProps {
-  sessionId: string | null;
-  messages: Message[];
-  onSend: (content: string, aiProvider?: 'ollama' | 'gemini') => Promise<void>;
-  isLoading?: boolean;
-  mode: 'syllabus' | 'open';
-  aiProvider?: 'ollama' | 'gemini';
-}
+const SUGGESTION_CHIPS = [
+  'Explain with steps',
+  'Give short answer',
+  'Show formulas',
+  'Summarize this topic',
+];
 
 const RESPONSE_CHIPS = [
   { id: 'quick', label: 'Quick' },
@@ -27,11 +25,24 @@ const RESPONSE_CHIPS = [
   { id: 'example', label: 'Example-Based' },
 ];
 
+interface ChatPanelProps {
+  sessionId: string | null;
+  messages: Message[];
+  onSend: (content: string, aiProvider?: 'ollama' | 'gemini') => Promise<void>;
+  isLoading?: boolean;
+  error?: string | null;
+  onDismissError?: () => void;
+  mode: 'syllabus' | 'open';
+  aiProvider?: 'ollama' | 'gemini';
+}
+
 export default function ChatPanel({
   sessionId,
   messages,
   onSend,
   isLoading,
+  error,
+  onDismissError,
   aiProvider = 'ollama',
 }: ChatPanelProps) {
   const [input, setInput] = useState('');
@@ -51,12 +62,21 @@ export default function ChatPanel({
     e?.preventDefault();
     const toSend = (text ?? input).trim();
     if (!toSend || isLoading) return;
-    if (!sessionId) {
-      await onSend(toSend, selectedMode);
-    } else {
-      await onSend(toSend);
+    try {
+      if (!sessionId) {
+        await onSend(toSend, selectedMode);
+      } else {
+        await onSend(toSend);
+      }
+      if (!text) setInput('');
+    } catch (_) {
+      // Error shown via parent error state
     }
-    if (!text) setInput('');
+  };
+
+  const handleSuggestionClick = (label: string) => {
+    if (isLoading) return;
+    handleSubmit(undefined, label);
   };
 
   const showWelcome = messages.length === 0;
@@ -65,14 +85,37 @@ export default function ChatPanel({
     <div className="flex flex-1 flex-col bg-gray-50 dark:bg-gray-950/50">
       <div className="flex flex-1 flex-col overflow-y-auto">
         <div className="mx-auto w-full max-w-2xl flex-1 px-4 py-6">
+          {error && (
+            <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-900/20">
+              <p className="text-sm font-medium text-red-800 dark:text-red-200">{error}</p>
+              {onDismissError && (
+                <button type="button" onClick={onDismissError} className="shrink-0 text-red-600 hover:text-red-800 dark:text-red-400">
+                  Dismiss
+                </button>
+              )}
+            </div>
+          )}
           {(!sessionId || showWelcome) && (
             <div className="flex flex-col items-center justify-center px-4 py-12 text-center">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                 Ask your doubt
               </h2>
-              <p className="mt-1 max-w-md text-sm text-gray-500 dark:text-gray-400">
+              <p className="mt-2 max-w-md text-base text-gray-600 dark:text-gray-300">
                 Ask any doubt from your syllabus. I'll explain step by step.
               </p>
+              <div className="mt-6 flex flex-wrap justify-center gap-2">
+                {SUGGESTION_CHIPS.map((label) => (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSuggestionClick(label); }}
+                    disabled={isLoading}
+                    className="rounded-full border-2 border-emerald-500/50 bg-emerald-500/10 px-4 py-2.5 text-sm font-medium text-emerald-700 transition hover:bg-emerald-500/20 dark:border-emerald-400/50 dark:text-emerald-300 dark:hover:bg-emerald-500/30"
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
@@ -137,7 +180,7 @@ export default function ChatPanel({
                 placeholder="Ask your doubt here..."
                 rows={1}
                 disabled={isLoading}
-                className="min-h-[44px] flex-1 resize-none bg-transparent text-sm placeholder:text-gray-500 focus:outline-none dark:placeholder:text-gray-400"
+                className="min-h-[44px] flex-1 resize-none bg-transparent text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none dark:text-gray-100 dark:placeholder:text-gray-400"
               />
               <Button
                 type="button"
@@ -153,17 +196,21 @@ export default function ChatPanel({
               </Button>
             </div>
             <Link
-              to="/profile"
+              to={sessionId ? `/chat/${sessionId}/quiz` : '/chat'}
               className="flex shrink-0 items-center gap-2 rounded-2xl bg-emerald-500 px-5 py-3 font-medium text-white shadow-md transition hover:bg-emerald-600"
             >
               <HelpCircle className="h-5 w-5" />
-              Start Quiz
+              {sessionId ? 'Start Quiz' : 'Start chat to quiz'}
             </Link>
           </div>
 
-          {!sessionId && (
-            <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-700 dark:bg-gray-800/50">
-              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Mode</span>
+          <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-700 dark:bg-gray-800/50">
+            <span className="text-xs font-medium text-gray-600 dark:text-gray-400">AI Mode</span>
+            {sessionId ? (
+              <span className="rounded-md bg-gray-200 px-2.5 py-1 text-xs font-medium text-gray-800 dark:bg-gray-600 dark:text-gray-200">
+                {aiProvider === 'gemini' ? 'Gemini' : 'Intelligence'} (this chat)
+              </span>
+            ) : (
               <div className="flex rounded-md bg-gray-200/80 p-0.5 dark:bg-gray-700">
                 <button
                   type="button"
@@ -190,8 +237,8 @@ export default function ChatPanel({
                   Gemini
                 </button>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -23,7 +23,7 @@ export default function ProfileHeader({ name, email, avatar, onEditClick }: Prof
         <div
           className={cn(
             'flex h-24 w-24 shrink-0 items-center justify-center rounded-full ring-4 ring-white/80 dark:ring-gray-800/80',
-            'bg-primary-100 text-2xl font-semibold text-primary-600 dark:bg-primary-900/40 dark:text-primary-400'
+            'bg-emerald-100 text-2xl font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
           )}
         >
           {avatar ? (

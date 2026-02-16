@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import {
   ProfileHeader,
+  ProfileEditModal,
   AccountInfoCard,
   LearningSummaryCard,
   ActivityProgressCard,
@@ -40,10 +41,11 @@ interface QuizAttempt {
 
 export default function Profile() {
   const navigate = useNavigate();
-  const { user: storeUser, logout } = useAuthStore();
+  const { user: storeUser, logout, updateUser } = useAuthStore();
   const { theme, setTheme } = useThemeStore();
 
   const [fullUser, setFullUser] = useState<FullUser | null>(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [streak, setStreak] = useState<Streak | null>(null);
   const [topics, setTopics] = useState<{ topic: string; count: number }[]>([]);
@@ -75,12 +77,25 @@ export default function Profile() {
     loadProfile();
   }, [loadProfile]);
 
+  useEffect(() => {
+    const prefTheme = fullUser?.preferences?.theme;
+    if (prefTheme && (prefTheme === 'light' || prefTheme === 'dark' || prefTheme === 'system')) {
+      setTheme(prefTheme);
+      const root = document.documentElement;
+      const isDark =
+        prefTheme === 'dark' ||
+        (prefTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      root.classList.toggle('dark', isDark);
+    }
+  }, [fullUser?.preferences?.theme, setTheme]);
+
   const applyTheme = (t: 'light' | 'dark' | 'system') => {
     setTheme(t);
     const root = document.documentElement;
     const isDark =
       t === 'dark' || (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
     root.classList.toggle('dark', isDark);
+    api.patch('/users/me', { preferences: { theme: t } }).catch(() => {});
   };
 
   const handleLogout = () => {
@@ -89,7 +104,21 @@ export default function Profile() {
   };
 
   const handleEditProfile = () => {
-    // Placeholder - could open modal or navigate to edit page
+    setEditModalOpen(true);
+  };
+
+  const handleSaveProfile = async (data: { name: string; avatar?: string | null }) => {
+    const { data: res } = await api.patch('/users/me', {
+      name: data.name,
+      ...(data.avatar !== undefined && { avatar: data.avatar }),
+    });
+    const updated = res.user;
+    setFullUser(updated);
+    updateUser({
+      name: updated.name,
+      avatar: updated.avatar,
+      preferences: updated.preferences,
+    });
   };
 
   const user = fullUser ?? storeUser;
@@ -97,29 +126,36 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary-600 border-t-transparent" />
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-gray-50 to-white dark:from-gray-950 dark:to-gray-900">
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-950 dark:to-gray-900">
+      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <Link
           to="/chat"
-          className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-gray-600 transition-colors hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400"
+          className="mb-8 inline-flex items-center gap-2 text-sm font-semibold text-gray-700 transition-colors hover:text-emerald-600 dark:text-gray-300 dark:hover:text-emerald-400"
         >
           <ChevronLeft className="h-4 w-4" />
           Back to Dashboard
         </Link>
 
-        <div className="space-y-6">
+        <div className="space-y-8">
           <ProfileHeader
             name={user?.name || 'Student'}
             email={user?.email || ''}
             avatar={user?.avatar}
             onEditClick={handleEditProfile}
+          />
+          <ProfileEditModal
+            isOpen={editModalOpen}
+            onClose={() => setEditModalOpen(false)}
+            currentName={user?.name || ''}
+            currentAvatar={user?.avatar}
+            onSave={handleSaveProfile}
           />
 
           <div className="grid gap-6 lg:grid-cols-2">
@@ -150,7 +186,7 @@ export default function Profile() {
             onThemeChange={applyTheme}
           />
 
-          <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
             <ProfileActions onLogout={handleLogout} />
           </div>
         </div>

@@ -65,7 +65,15 @@ export default function DashboardHeader({ mode, onModeChange }: DashboardHeaderP
       </div>
 
       <div className="flex items-center gap-3">
-        <span className="text-sm text-gray-500 dark:text-gray-400">Hello, {user?.name?.split(' ')[0] || 'User'}</span>
+        <Link
+          to="/profile"
+          className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
+        >
+          <span>Hello, {user?.name?.split(' ')[0] || 'User'}</span>
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 text-sm font-semibold text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
+            {initials}
+          </div>
+        </Link>
         <button
           type="button"
           onClick={toggleTheme}
@@ -74,9 +82,6 @@ export default function DashboardHeader({ mode, onModeChange }: DashboardHeaderP
         >
           {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
         </button>
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 text-sm font-semibold text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
-          {initials}
-        </div>
         <button
           type="button"
           onClick={() => {

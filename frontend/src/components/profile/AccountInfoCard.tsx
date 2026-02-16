@@ -47,8 +47,8 @@ export default function AccountInfoCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Account Information</CardTitle>
-        <p className="text-sm text-gray-500 dark:text-gray-400">Your account details</p>
+        <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">Account Information</CardTitle>
+        <p className="text-sm text-gray-600 dark:text-gray-400">Your account details</p>
       </CardHeader>
       <CardContent className="pt-0">
         <div className="space-y-0">

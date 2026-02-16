@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import LeftSidebar from '../components/layout/LeftSidebar';
 import RightSidebar from '../components/layout/RightSidebar';
@@ -40,7 +40,15 @@ export default function Dashboard() {
   const [topics, setTopics] = useState<{ topic: string; count: number }[]>([]);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [chatError, setChatError] = useState<string | null>(null);
   const [defaultMode, setDefaultMode] = useState<'syllabus' | 'open'>('syllabus');
+  const justCreatedSessionIdRef = useRef<string | null>(null);
+
+  const normalizeMessage = (m: { _id?: string; id?: string; role: string; content?: string }): Message => ({
+    _id: (m._id ?? m.id ?? `msg-${Date.now()}`).toString(),
+    role: m.role === 'assistant' ? 'assistant' : 'user',
+    content: typeof m.content === 'string' ? m.content : '',
+  });
 
   const fetchSessions = useCallback(async () => {
     const { data } = await api.get('/chat/sessions');
@@ -80,12 +88,16 @@ export default function Dashboard() {
   }, [fetchSessions, fetchPdfs, fetchStats]);
 
   useEffect(() => {
+    if (sessionId === justCreatedSessionIdRef.current) {
+      justCreatedSessionIdRef.current = null;
+      return;
+    }
     if (sessionId) fetchSession(sessionId);
     else setCurrentSession(null), setMessages([]);
   }, [sessionId, fetchSession]);
 
   const handleNewChat = () => {
-    navigate('/chat', { replace: true });
+    navigate('/chat');
     setCurrentSession(null);
     setMessages([]);
   };
@@ -95,28 +107,28 @@ export default function Dashboard() {
     if (!activeSessionId) {
       if (!aiProvider) return;
       setIsLoading(true);
+      setChatError(null);
       try {
         const { data } = await api.post('/chat/sessions', {
           title: 'New Chat',
           mode: defaultMode,
           aiProvider,
         });
+        const newId = data?.session?._id;
+        if (!newId) throw new Error('No session ID returned');
+        const msgRes = await api.post(`/chat/sessions/${newId}/messages`, { content });
+        const userMsgRes = normalizeMessage(msgRes.data?.userMessage ?? { role: 'user', content });
+        const aiMsgRes = normalizeMessage(msgRes.data?.aiMessage ?? { role: 'assistant', content: '' });
         setSessions((prev) => [data.session, ...prev]);
-        activeSessionId = data.session._id;
-        navigate(`/chat/${activeSessionId}`);
-        const userMsg: Message = {
-          _id: `temp-${Date.now()}`,
-          role: 'user',
-          content,
-        };
-        setMessages([userMsg]);
-        const msgRes = await api.post(`/chat/sessions/${activeSessionId}/messages`, { content });
-        setMessages((prev) =>
-          prev.filter((m) => m._id !== userMsg._id).concat(msgRes.data.userMessage, msgRes.data.aiMessage)
-        );
+        setCurrentSession(data.session);
+        setMessages([userMsgRes, aiMsgRes]);
+        justCreatedSessionIdRef.current = newId;
+        navigate(`/chat/${newId}`);
+        setChatError(null);
         fetchStats();
-      } catch (err) {
-        setMessages([]);
+      } catch (err: unknown) {
+        const msg = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
+        setChatError(msg || 'AI is unavailable. Is Ollama running? Check RUN.md.');
       } finally {
         setIsLoading(false);
       }
@@ -131,12 +143,17 @@ export default function Dashboard() {
     setMessages((prev) => [...prev, userMsg]);
     try {
       const { data } = await api.post(`/chat/sessions/${activeSessionId}/messages`, { content });
+      const userMsgRes = normalizeMessage(data?.userMessage ?? { role: 'user', content });
+      const aiMsgRes = normalizeMessage(data?.aiMessage ?? { role: 'assistant', content: '' });
       setMessages((prev) =>
-        prev.filter((m) => m._id !== userMsg._id).concat(data.userMessage, data.aiMessage)
+        prev.filter((m) => m._id !== userMsg._id).concat(userMsgRes, aiMsgRes)
       );
+      setChatError(null);
       fetchStats();
-    } catch (err) {
+    } catch (err: unknown) {
       setMessages((prev) => prev.filter((m) => m._id !== userMsg._id));
+      const msg = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
+      setChatError(msg || 'AI is unavailable. Is Ollama running? Check RUN.md.');
     } finally {
       setIsLoading(false);
     }
@@ -191,6 +208,8 @@ export default function Dashboard() {
           messages={messages}
           onSend={handleSend}
           isLoading={isLoading}
+          error={chatError}
+          onDismissError={() => setChatError(null)}
           mode={currentSession?.mode || 'syllabus'}
           aiProvider={currentSession?.aiProvider || 'ollama'}
         />

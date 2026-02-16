@@ -157,8 +157,11 @@ export default function LeftSidebar({
         </div>
       </div>
 
-      <div className="border-t border-gray-200 p-3 dark:border-gray-800">
-        <div className="flex items-center gap-3 rounded-lg px-2 py-2">
+      <Link
+        to="/profile"
+        className="border-t border-gray-200 p-3 dark:border-gray-800"
+      >
+        <div className="flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-semibold text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
             {initials}
           </div>
@@ -167,7 +170,7 @@ export default function LeftSidebar({
             <p className="truncate text-xs text-gray-500 dark:text-gray-400">{user?.email || ''}</p>
           </div>
         </div>
-      </div>
+      </Link>
     </aside>
   );
 }

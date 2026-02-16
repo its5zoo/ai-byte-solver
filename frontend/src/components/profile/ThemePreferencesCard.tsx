@@ -24,8 +24,8 @@ export default function ThemePreferencesCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Theme & Preferences</CardTitle>
-        <p className="text-sm text-gray-500 dark:text-gray-400">Customize your experience</p>
+        <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">Theme & Preferences</CardTitle>
+        <p className="text-sm text-gray-600 dark:text-gray-400">Customize your experience</p>
       </CardHeader>
       <CardContent className="space-y-6 pt-0">
         <div>
@@ -39,10 +39,10 @@ export default function ThemePreferencesCard({
                 type="button"
                 onClick={() => onThemeChange(opt.value)}
                 className={cn(
-                  'inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors',
+                  'inline-flex items-center gap-2 rounded-xl border-2 px-4 py-2.5 text-sm font-medium transition-colors',
                   theme === opt.value
-                    ? 'border-primary-500 bg-primary-50 text-primary-700 dark:border-primary-500 dark:bg-primary-900/30 dark:text-primary-300'
-                    : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                    ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:border-emerald-500 dark:bg-emerald-900/30 dark:text-emerald-300'
+                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
                 )}
               >
                 <opt.icon className="h-4 w-4" />

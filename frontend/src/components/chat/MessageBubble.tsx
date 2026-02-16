@@ -35,7 +35,8 @@ function renderMath(content: string): string {
 
 export default function MessageBubble({ message }: { message: Message }) {
   const isUser = message.role === 'user';
-  const html = renderMath(message.content);
+  const raw = message.content?.trim() || '';
+  const html = raw ? renderMath(message.content) : '';
 
   return (
     <div
@@ -59,14 +60,16 @@ export default function MessageBubble({ message }: { message: Message }) {
           'max-w-[85%] rounded-2xl px-4 py-3 shadow-sm',
           isUser
             ? 'bg-emerald-500 text-white'
-            : 'bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700'
+            : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600'
         )}
       >
         <div
-          dangerouslySetInnerHTML={{ __html: html }}
+          dangerouslySetInnerHTML={{ __html: html || '<p class="opacity-80">No response yet.</p>' }}
           className={cn(
-            'prose prose-sm max-w-none dark:prose-invert',
-            isUser ? 'text-white [&_*]:text-white [&_a]:text-primary-200' : 'text-gray-800 dark:text-gray-200'
+            'prose prose-sm max-w-none dark:prose-invert break-words',
+            isUser
+              ? 'text-white [&_*]:text-white [&_a]:text-emerald-200'
+              : 'text-gray-900 dark:text-gray-100 [&_*]:text-gray-900 [&_*]:dark:text-gray-100'
           )}
         />
       </div>

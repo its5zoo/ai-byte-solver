@@ -11,7 +11,7 @@ export default function ProfileActions({ onLogout, onDeleteAccount }: ProfileAct
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <Button
         variant="default"
-        className="gap-2"
+        className="gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-600"
         onClick={onLogout}
       >
         <LogOut className="h-4 w-4" />

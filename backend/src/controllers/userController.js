@@ -16,7 +16,10 @@ export const updateProfile = async (req, res, next) => {
     const updates = {};
     if (name !== undefined) updates.name = name;
     if (avatar !== undefined) updates.avatar = avatar;
-    if (preferences !== undefined) updates.preferences = { ...req.user.preferences, ...preferences };
+    if (preferences !== undefined) {
+      const current = await User.findById(req.user.id).select('preferences').lean();
+      updates.preferences = { ...(current?.preferences || {}), ...preferences };
+    }
 
     const user = await User.findByIdAndUpdate(
       req.user.id,
