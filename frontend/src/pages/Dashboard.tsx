@@ -78,7 +78,7 @@ export default function Dashboard() {
       setStreak(st.data.streak || null);
       setTimeline(t.data.timeline || []);
       setTopics(tp.data.topics || []);
-    } catch (_) {}
+    } catch (_) { }
   }, []);
 
   useEffect(() => {
@@ -234,7 +234,6 @@ export default function Dashboard() {
       <LeftSidebar
         sessions={sessions}
         pdfs={pdfs}
-        sessionId={sessionId || null}
         attachedPdfId={attachedPdfId}
         attachedPdfName={attachedPdfName}
         onNewChat={handleNewChat}
@@ -257,6 +256,9 @@ export default function Dashboard() {
           error={chatError}
           onDismissError={() => setChatError(null)}
           mode={currentSession?.mode || 'syllabus'}
+          pdfs={pdfs}
+          attachedPdfId={attachedPdfId}
+          onClearPdf={handleDetachPdf}
         />
       </main>
       <RightSidebar

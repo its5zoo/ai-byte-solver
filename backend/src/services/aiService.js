@@ -6,60 +6,77 @@ import UploadedPDF from '../models/UploadedPDF.js';
 const OLLAMA_BASE = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'gpt-oss:120b-cloud';
 
-const BASE_SYSTEM = `You are AI Byte Solver, an education-focused AI doubt-solving assistant for students.
-Your role is strictly academic: help students understand concepts, solve doubts, and prepare for exams.
+const BASE_SYSTEM = `You are AI Byte Solver, a concise academic AI tutor for students.
 
-CRITICAL: Answer ONLY the exact question the user asked. Do not substitute or confuse with other topics (e.g. if they ask about Green's theorem, do NOT answer about Newton's laws or inertial force; if they ask about one concept, answer that concept only).
+RESPONSE RULES (CRITICAL — follow these strictly):
+1. ALWAYS be SHORT and TO-THE-POINT. Never write paragraphs of text.
+2. Quick answers: 3-5 lines max. Give the core concept, formula, and one-line example.
+3. Step-by-step: Use numbered steps. Each step = 1-2 lines. Max 6-8 steps.
+4. Example-based: Give 1-2 worked examples, brief explanation.
+5. NEVER repeat the question back. NEVER add unnecessary introductions or conclusions.
+6. Use bullet points for lists, not paragraphs.
 
-CONSTRAINTS:
-- Never generate non-academic content (games, stories, jokes, non-educational material).
-- Support Hinglish and casual student language.
-- Detect difficulty level of questions (easy/medium/hard) and adjust explanations accordingly.
-- When appropriate, provide summaries, formula lists, and key takeaways.
-- Use LaTeX for math: \\( inline \\) and \\[ block \\].
+MATH FORMATTING (CRITICAL):
+- Use LaTeX math: \\( inline \\) and \\[ block \\]
+- Example inline: The formula is \\( E = mc^2 \\)
+- Example block: \\[ \\oint_C \\vec{F} \\cdot d\\vec{r} = \\iint_D \\left( \\frac{\\partial Q}{\\partial x} - \\frac{\\partial P}{\\partial y} \\right) dA \\]
+- ALWAYS use LaTeX for ANY math symbol, variable, or formula. Never write math as plain text.
 
-Respond concisely, clearly, and academically.`;
+TONE: Student-friendly, encouraging, exam-focused. Support Hinglish.
+SCOPE: ONLY academic content. Politely refuse non-study queries.
+ACCURACY: Answer ONLY the exact question asked. Never confuse topics.`;
 
 const SYLLABUS_MODE_ADDON = `
 MODE: Syllabus Mode
-- Answer ONLY from the provided syllabus content below.
-- Always mention the PDF name and chapter/topic when answering.
-- If the answer is not in the syllabus, say: "This topic is not in your uploaded syllabus. Please upload the relevant PDF or switch to Open Source Mode."
-- Do not hallucinate or guess. Strictly stay within the provided text.`;
+- Answer ONLY from the provided syllabus content.
+- Mention PDF name and topic when answering.
+- If not in syllabus: "This topic is not in your uploaded syllabus. Switch to Open Mode or upload the relevant PDF."
+- Stay concise. Never hallucinate.`;
 
 const OPEN_MODE_ADDON = `
 MODE: Open Source Mode
-- Use your knowledge but stay strictly academic and exam-focused.
-- No non-academic content.
-- You may provide summaries, formula lists, and key points.
-- Detect question difficulty and tailor your response.`;
+- Use your knowledge but stay strictly academic.
+- Keep answers concise and exam-focused.
+- Provide formulas, key points, and brief summaries.`;
+
 
 export const buildSystemPrompt = async (mode, pdfId) => {
   let system = BASE_SYSTEM;
 
-  if (mode === 'syllabus') {
-    if (pdfId) {
-      const pdf = await UploadedPDF.findById(pdfId).lean();
-      if (pdf?.extractedText) {
-        system +=
-          SYLLABUS_MODE_ADDON +
-          `
+  if (pdfId) {
+    const pdf = await UploadedPDF.findById(pdfId).lean();
+    if (pdf?.extractedText) {
+      // Common PDF context for both modes
+      const pdfContext = `
+## Reference Material (from: ${pdf.originalName})
+${pdf.extractedText.substring(0, 15000)}
+`;
 
-## Syllabus Content (from: ${pdf.originalName})
-
-${pdf.extractedText.substring(0, 12000)}
-
-Use ONLY the above content to answer. Cite: "From ${pdf.originalName}, [topic]: ..."`;
+      if (mode === 'syllabus') {
+        // Strict Syllabus Mode
+        system += SYLLABUS_MODE_ADDON + pdfContext +
+          `\n\nCRITICAL: Answer ONLY using the Reference Material above. If the answer is not there, explicitly state it is not in the syllabus.`;
       } else {
-        system += SYLLABUS_MODE_ADDON + '\n\nNo syllabus content available for this PDF. Ask user to re-upload or switch to Open Mode.';
+        // Open Mode with PDF context
+        system += OPEN_MODE_ADDON + pdfContext +
+          `\n\nNOTE: You have the above Reference Material available. Use it if relevant, but you can also use your own knowledge. Cite the PDF when you use information from it.`;
       }
     } else {
-      system +=
-        SYLLABUS_MODE_ADDON +
-        '\n\nNo syllabus PDF is attached to this chat. Answer from your knowledge but say: "No PDF is attached for syllabus mode. Upload a PDF in the sidebar for answers from your materials." Do not confuse the user\'s topic with other topics.';
+      // PDF found but no text
+      if (mode === 'syllabus') {
+        system += SYLLABUS_MODE_ADDON + '\n\nError: Syllabus PDF has no readable text. Ask user to re-upload.';
+      } else {
+        system += OPEN_MODE_ADDON;
+      }
     }
   } else {
-    system += OPEN_MODE_ADDON;
+    // No PDF attached
+    if (mode === 'syllabus') {
+      system += SYLLABUS_MODE_ADDON +
+        '\n\nNo PDF attached. Please upload a PDF to use Syllabus Mode.';
+    } else {
+      system += OPEN_MODE_ADDON;
+    }
   }
 
   return system;
@@ -106,7 +123,7 @@ async function* streamOllama(body) {
         const json = JSON.parse(line);
         const delta = json.message?.content || '';
         if (delta) yield { content: delta };
-      } catch (_) {}
+      } catch (_) { }
     }
   }
 }

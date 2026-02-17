@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
-import { Brain, LogOut, Moon, Sun } from 'lucide-react';
+import { LogOut, Moon, Sun } from 'lucide-react';
 import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
 import { cn } from '../../lib/utils';
+import Logo from '../ui/Logo';
 
 type ChatMode = 'syllabus' | 'open';
 
@@ -30,11 +31,8 @@ export default function DashboardHeader({ mode, onModeChange }: DashboardHeaderP
   return (
     <header className="flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white/90 px-4 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
       <div className="flex items-center gap-6">
-        <Link to="/chat" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-600 text-white shadow-lg shadow-violet-500/30">
-            <Brain className="h-5 w-5" />
-          </div>
-          <span className="text-lg font-bold text-slate-900 dark:text-white">AI Byte Solver</span>
+        <Link to="/chat" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
+          <Logo />
         </Link>
         <div className="flex rounded-lg bg-slate-100 p-0.5 dark:bg-slate-800">
           <button

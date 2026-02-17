@@ -1,8 +1,6 @@
 import { User, Brain } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { cleanMarkdown } from '../../lib/markdownCleaner';
-import { renderMathInText } from '../../lib/mathRenderer';
-import 'katex/dist/katex.min.css';
+import { processAIResponse, processUserMessage } from '../../lib/markdownCleaner';
 
 interface Message {
   _id: string;
@@ -14,17 +12,10 @@ export default function MessageBubble({ message }: { message: Message }) {
   const isUser = message.role === 'user';
   const raw = message.content?.trim() || '';
 
-  // Process the content
-  let processedContent = raw;
-
-  if (!isUser && raw) {
-    // For AI responses: clean markdown artifacts and render math
-    processedContent = cleanMarkdown(raw);
-    processedContent = renderMathInText(processedContent);
-  } else if (isUser && raw) {
-    // For user messages: just render math, keep text as-is
-    processedContent = renderMathInText(raw.replace(/\n/g, '<br/>'));
-  }
+  // Process the content using the unified processor
+  const processedContent = isUser
+    ? processUserMessage(raw)
+    : processAIResponse(raw);
 
   return (
     <div
@@ -36,56 +27,45 @@ export default function MessageBubble({ message }: { message: Message }) {
       {/* Avatar */}
       <div
         className={cn(
-          'flex h-10 w-10 shrink-0 items-center justify-center rounded-full ring-2',
+          'flex h-9 w-9 shrink-0 items-center justify-center rounded-full',
           isUser
-            ? 'bg-gradient-to-br from-violet-600 to-violet-700 text-white ring-violet-500/20'
-            : 'bg-gradient-to-br from-violet-100 to-violet-200 text-violet-700 ring-violet-500/10 dark:from-violet-900/40 dark:to-violet-800/40 dark:text-violet-300 dark:ring-violet-500/20'
+            ? 'bg-violet-600 text-white'
+            : 'bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300'
         )}
       >
-        {isUser ? <User className="h-5 w-5" /> : <Brain className="h-5 w-5" />}
+        {isUser ? <User className="h-4 w-4" /> : <Brain className="h-4 w-4" />}
       </div>
 
       {/* Message bubble */}
       <div
         className={cn(
-          'group relative max-w-[85%] rounded-2xl px-4 py-3 shadow-sm transition-all',
+          'group relative rounded-2xl px-4 py-3 shadow-sm transition-all',
           isUser
-            ? 'bg-gradient-to-br from-violet-600 to-violet-700 text-white shadow-violet-500/20'
-            : 'bg-white border border-slate-200 dark:bg-slate-800 dark:border-slate-700'
+            ? 'max-w-[75%] bg-violet-600 text-white'
+            : 'max-w-[90%] bg-white border border-slate-200 dark:bg-slate-800 dark:border-slate-700'
         )}
       >
-        {/* Content */}
         <div
           dangerouslySetInnerHTML={{
-            __html: processedContent || '<p class="opacity-70 text-sm">No response yet.</p>'
+            __html: processedContent || '<span class="opacity-60 text-sm">No response yet.</span>'
           }}
           className={cn(
-            'prose prose-sm max-w-none break-words leading-relaxed',
+            'text-sm leading-relaxed break-words',
             isUser
-              ? 'prose-invert [&_*]:text-white [&_a]:text-violet-200 [&_code]:bg-violet-800 [&_code]:text-violet-100'
-              : 'text-slate-800 dark:text-slate-100 [&_*]:text-slate-800 [&_*]:dark:text-slate-100 [&_a]:text-violet-600 [&_a]:dark:text-violet-400 [&_code]:bg-slate-100 [&_code]:dark:bg-slate-700 [&_code]:text-slate-800 [&_code]:dark:text-slate-100',
-            // Clean typography
-            '[&_p]:my-2 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0',
-            '[&_strong]:font-semibold',
-            '[&_em]:italic',
-            '[&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-5',
-            '[&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-5',
-            '[&_li]:my-1',
-            // Math styles
+              ? '[&_*]:text-white [&_code]:bg-violet-500/40 [&_code]:text-white'
+              : 'text-slate-800 dark:text-slate-100 [&_strong]:font-semibold [&_code]:bg-slate-100 [&_code]:dark:bg-slate-700',
+            // Lists
+            '[&_ul]:my-1.5 [&_ul]:list-disc [&_ul]:pl-5',
+            '[&_ol]:my-1.5 [&_ol]:list-decimal [&_ol]:pl-5',
+            '[&_li]:my-0.5',
+            '[&_p]:my-1.5 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0',
+            // Math
             '[&_.katex]:text-current',
-            '[&_.katex-display]:my-3 [&_.katex-display]:overflow-x-auto'
+            '[&_.katex-display]:my-2 [&_.katex-display]:overflow-x-auto',
+            // HR
+            '[&_hr]:my-2'
           )}
         />
-
-        {/* Timestamp (shows on hover) */}
-        <div className="mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-          <span className={cn(
-            'text-xs',
-            isUser ? 'text-violet-200' : 'text-slate-500 dark:text-slate-400'
-          )}>
-            {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          </span>
-        </div>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Send, Loader2, HelpCircle, Sparkles } from 'lucide-react';
+import { Send, Loader2, HelpCircle, Sparkles, FileText, X } from 'lucide-react';
 import Button from '../ui/Button';
 import MessageBubble from './MessageBubble';
 import { cn } from '../../lib/utils';
@@ -12,12 +12,7 @@ interface Message {
   createdAt?: string;
 }
 
-const SUGGESTION_CHIPS = [
-  'Explain with steps',
-  'Give short answer',
-  'Show formulas',
-  'Summarize this topic',
-];
+
 
 const RESPONSE_CHIPS = [
   { id: 'quick', label: 'Quick', icon: '⚡' },
@@ -25,14 +20,22 @@ const RESPONSE_CHIPS = [
   { id: 'example', label: 'Example-Based', icon: '💡' },
 ];
 
+interface PDF {
+  _id: string;
+  originalName: string;
+}
+
 interface ChatPanelProps {
   sessionId: string | null;
   messages: Message[];
-  onSend: (content: string) => Promise<void>;
+  onSend: (content: string, pdfId?: string) => Promise<void>;
   isLoading?: boolean;
   error?: string | null;
   onDismissError?: () => void;
   mode: 'syllabus' | 'open';
+  pdfs: PDF[];
+  attachedPdfId?: string | null;
+  onClearPdf?: () => void;
 }
 
 export default function ChatPanel({
@@ -42,6 +45,9 @@ export default function ChatPanel({
   isLoading,
   error,
   onDismissError,
+  pdfs,
+  attachedPdfId,
+  onClearPdf,
 }: ChatPanelProps) {
   const [input, setInput] = useState('');
   const [selectedChip, setSelectedChip] = useState<string>('quick');
@@ -65,20 +71,22 @@ export default function ChatPanel({
     e?.preventDefault();
     const toSend = (text ?? input).trim();
     if (!toSend || isLoading) return;
+
+    // Always clear input if we're sending a message
+    setInput('');
+    if (textareaRef.current) textareaRef.current.style.height = 'auto';
+
     try {
-      await onSend(toSend);
-      if (!text) setInput('');
+      await onSend(toSend, attachedPdfId || undefined);
     } catch (_) {
       // Error shown via parent error state
     }
   };
 
-  const handleSuggestionClick = (label: string) => {
-    if (isLoading) return;
-    handleSubmit(undefined, label);
-  };
-
   const showWelcome = messages.length === 0;
+
+  // Find selected PDF name
+  const selectedPdf = pdfs.find(p => p._id === attachedPdfId);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
@@ -116,57 +124,67 @@ export default function ChatPanel({
                 I'm here to help you understand concepts, solve problems, and ace your exams.
                 Ask me anything academic!
               </p>
-              <div className="flex flex-wrap justify-center gap-2">
-                {SUGGESTION_CHIPS.map((label) => (
-                  <button
-                    key={label}
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleSuggestionClick(label);
-                    }}
-                    disabled={isLoading}
-                    className="group rounded-full border-2 border-violet-500/50 bg-violet-500/5 px-5 py-2.5 text-sm font-medium text-violet-700 transition-all hover:border-violet-500 hover:bg-violet-500/10 hover:scale-105 active:scale-95 dark:border-violet-400/50 dark:text-violet-300 dark:hover:bg-violet-500/20 disabled:opacity-50 disabled:pointer-events-none"
-                  >
-                    {label}
-                  </button>
-                ))}
+
+              <div className="flex flex-col items-center justify-center gap-2">
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                  {selectedPdf
+                    ? `Using: ${selectedPdf.originalName}`
+                    : 'Upload your file to solve your doubts'
+                  }
+                </p>
               </div>
             </div>
           )}
 
           {/* Messages */}
-          {messages.length > 0 && (
-            <div className="space-y-6">
-              {messages.map((m) => (
+          <div className="space-y-6">
+            {messages.map((m) => (
+              <div
+                key={m._id}
+                className={cn(
+                  'flex w-full animate-fade-in-up',
+                  m.role === 'user' ? 'justify-end' : 'justify-start'
+                )}
+              >
                 <MessageBubble key={m._id} message={m} />
-              ))}
-            </div>
-          )}
-
-          {/* Loading indicator */}
-          {isLoading && (
-            <div className="flex gap-3 mt-6 animate-fade-in-up">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-100 to-violet-200 ring-2 ring-violet-500/10 dark:from-violet-900/40 dark:to-violet-800/40">
-                <Loader2 className="h-5 w-5 animate-spin text-violet-700 dark:text-violet-300" />
               </div>
-              <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 dark:border-slate-700 dark:bg-slate-800">
-                <span className="text-sm text-slate-600 dark:text-slate-400">Thinking</span>
-                <span className="animate-bounce text-violet-600 dark:text-violet-400">.</span>
-                <span className="animate-bounce text-violet-600 dark:text-violet-400" style={{ animationDelay: '0.1s' }}>.</span>
-                <span className="animate-bounce text-violet-600 dark:text-violet-400" style={{ animationDelay: '0.2s' }}>.</span>
+            ))}
+            {isLoading && (
+              <div className="flex justify-start animate-pulse">
+                <div className="flex items-center gap-2 rounded-2xl rounded-bl-none bg-slate-100 px-5 py-3 dark:bg-slate-800">
+                  <div className="h-2 w-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="h-2 w-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <div className="h-2 w-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
               </div>
-            </div>
-          )}
-
-          <div ref={bottomRef} />
+            )}
+            <div ref={bottomRef} />
+          </div>
         </div>
       </div>
 
       {/* Input area */}
       <div className="border-t border-slate-200 bg-white/90 backdrop-blur-lg px-4 py-4 dark:border-slate-800 dark:bg-slate-900/90">
         <div className="mx-auto max-w-3xl space-y-3">
+
+          {/* Selected PDF Badge */}
+          {attachedPdfId && (
+            <div className="flex items-center gap-2 text-xs font-medium text-violet-600 dark:text-violet-400 px-1 animate-fade-in-down">
+              <span className="flex items-center gap-1.5 bg-violet-50 dark:bg-violet-900/20 px-2 py-1 rounded-md border border-violet-100 dark:border-violet-800">
+                <FileText className="h-3 w-3" />
+                Using: {selectedPdf?.originalName || 'Selected PDF'}
+                {onClearPdf && (
+                  <button
+                    onClick={onClearPdf}
+                    className="ml-1 hover:text-red-500"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </span>
+            </div>
+          )}
+
           {/* Response style chips */}
           {sessionId && messages.length > 0 && (
             <div className="flex flex-wrap gap-2">
@@ -191,7 +209,7 @@ export default function ChatPanel({
 
           {/* Input and send button */}
           <div className="flex gap-3">
-            <div className="flex flex-1 items-end gap-2 rounded-2xl border border-slate-300 bg-slate-50/80 py-2 pl-5 pr-2 dark:border-slate-700 dark:bg-slate-800/50 focus-within:border-violet-500 focus-within:ring-2 focus-within:ring-violet-500/20 transition-all">
+            <div className="flex flex-1 items-center gap-2 rounded-2xl border border-slate-300 bg-slate-50/80 py-2 pl-5 pr-2 dark:border-slate-700 dark:bg-slate-800/50 focus-within:border-violet-500 focus-within:ring-2 focus-within:ring-violet-500/20 transition-all">
               <textarea
                 ref={textareaRef}
                 value={input}
@@ -202,23 +220,26 @@ export default function ChatPanel({
                     handleSubmit(undefined, input.trim() || undefined);
                   }
                 }}
-                placeholder="Ask your doubt here... (Shift+Enter for new line)"
+                placeholder="Ask your doubt to Byte AI"
                 rows={1}
                 disabled={isLoading}
-                className="max-h-32 flex-1 resize-none bg-transparent text-base text-slate-900 placeholder:text-slate-500 focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-400 custom-scrollbar"
+                className="max-h-32 flex-1 resize-none bg-transparent text-base text-slate-900 placeholder:text-slate-500 border-none outline-none ring-0 focus:ring-0 focus:outline-none shadow-none appearance-none dark:text-slate-100 dark:placeholder:text-slate-400 custom-scrollbar"
               />
               <Button
                 type="button"
                 onClick={() => handleSubmit(undefined)}
                 disabled={isLoading || !input.trim()}
-                variant="primary"
-                size="sm"
-                className="h-10 w-10 shrink-0 rounded-full p-0"
+                className={cn(
+                  "h-10 w-10 shrink-0 rounded-full p-0 transition-all duration-300",
+                  input.trim()
+                    ? "bg-gradient-to-r from-violet-600 to-violet-700 text-white shadow-md shadow-violet-500/30 hover:shadow-lg hover:shadow-violet-500/40 hover:scale-105 active:scale-95"
+                    : "bg-slate-200 text-slate-400 dark:bg-slate-700 dark:text-slate-500"
+                )}
               >
                 {isLoading ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
-                  <Send className="h-5 w-5" />
+                  <Send className="h-5 w-5 ml-0.5" />
                 )}
               </Button>
             </div>

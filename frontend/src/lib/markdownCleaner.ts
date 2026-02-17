@@ -1,136 +1,115 @@
 /**
- * Markdown Cleaner Utility
- * Cleans markdown syntax artifacts and converts to clean, friendly HTML
+ * Markdown Cleaner + Math Renderer
+ * Cleans markdown syntax and renders math in one pass to avoid placeholder issues
  */
 
+import katex from 'katex';
+import 'katex/dist/katex.min.css';
+
 /**
- * Removes markdown artifacts and converts markdown to clean HTML
- * - Removes ** (bold markers)
- * - Removes ## (heading markers) 
- * - Converts markdown lists to HTML lists
- * - Preserves math delimiters for KaTeX rendering
- * - Creates friendly, readable text
+ * Render a single math expression with KaTeX
  */
-export function cleanMarkdown(text: string): string {
-  if (!text) return '';
-  
-  let cleaned = text;
-  
-  // Preserve math expressions (we'll process them separately)
-  const mathPlaceholders: { placeholder: string; original: string }[] = [];
-  let mathCounter = 0;
-  
-  // Store block math \[...\]
-  cleaned = cleaned.replace(/\\\[[\s\S]*?\\\]/g, (match) => {
-    const placeholder = `__BLOCK_MATH_${mathCounter}__`;
-    mathPlaceholders.push({ placeholder, original: match });
-    mathCounter++;
-    return placeholder;
-  });
-  
-  // Store inline math \(...\)
-  cleaned = cleaned.replace(/\\\([\s\S]*?\\\)/g, (match) => {
-    const placeholder = `__INLINE_MATH_${mathCounter}__`;
-    mathPlaceholders.push({ placeholder, original: match });
-    mathCounter++;
-    return placeholder;
-  });
-  
-  // Store $...$ inline math
-  cleaned = cleaned.replace(/\$([^\$\n]+)\$/g, (match) => {
-    const placeholder = `__INLINE_MATH_${mathCounter}__`;
-    mathPlaceholders.push({ placeholder, original: match });
-    mathCounter++;
-    return placeholder;
-  });
-  
-  // Store $$...$$ block math
-  cleaned = cleaned.replace(/\$\$([\s\S]*?)\$\$/g, (match) => {
-    const placeholder = `__BLOCK_MATH_${mathCounter}__`;
-    mathPlaceholders.push({ placeholder, original: match });
-    mathCounter++;
-    return placeholder;
-  });
-  
-  // Remove markdown heading markers (##, ###, etc.) but preserve the text
-  cleaned = cleaned.replace(/^#{1,6}\s+(.+)$/gm, '<strong>$1</strong>');
-  
-  // Remove bold/italic markers but preserve emphasis with HTML
-  cleaned = cleaned.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
-  cleaned = cleaned.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  cleaned = cleaned.replace(/\*(.+?)\*/g, '<em>$1</em>');
-  cleaned = cleaned.replace(/___(.+?)___/g, '<strong><em>$1</em></strong>');
-  cleaned = cleaned.replace(/__(.+?)__/g, '<strong>$1</strong>');
-  cleaned = cleaned.replace(/_(.+?)_/g, '<em>$1</em>');
-  
-  // Convert unordered lists
-  cleaned = cleaned.replace(/^\s*[-*+]\s+(.+)$/gm, '<li>$1</li>');
-  cleaned = cleaned.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
-  
-  // Convert ordered lists
-  cleaned = cleaned.replace(/^\s*\d+\.\s+(.+)$/gm, '<li>$1</li>');
-  
-  // Convert line breaks
-  cleaned = cleaned.replace(/\n\n+/g, '</p><p>');
-  cleaned = cleaned.replace(/\n/g, '<br/>');
-  
-  // Wrap in paragraph tags if not already wrapped
-  if (!cleaned.startsWith('<') && !cleaned.includes('<p>')) {
-    cleaned = `<p>${cleaned}</p>`;
+function renderKatex(expr: string, displayMode: boolean): string {
+  try {
+    return katex.renderToString(expr.trim(), {
+      displayMode,
+      throwOnError: false,
+      errorColor: '#cc0000',
+      strict: false,
+    } as katex.KatexOptions);
+  } catch {
+    return `<code class="math-error">${expr}</code>`;
   }
-  
-  // Restore math expressions
-  mathPlaceholders.forEach(({ placeholder, original }) => {
-    cleaned = cleaned.replace(placeholder, original);
-  });
-  
-  return cleaned;
 }
 
 /**
- * Converts markdown to friendly plain text (no HTML)
- * Useful for previews and summaries
+ * Process AI response: render math first, then clean markdown
+ * This avoids the placeholder corruption bugs
  */
-export function markdownToPlainText(text: string): string {
+export function processAIResponse(text: string): string {
   if (!text) return '';
-  
-  let plain = text;
-  
-  // Remove markdown syntax
-  plain = plain.replace(/^#{1,6}\s+/gm, '');
-  plain = plain.replace(/\*\*\*(.+?)\*\*\*/g, '$1');
-  plain = plain.replace(/\*\*(.+?)\*\*/g, '$1');
-  plain = plain.replace(/\*(.+?)\*/g, '$1');
-  plain = plain.replace(/___(.+?)___/g, '$1');
-  plain = plain.replace(/__(.+?)__/g, '$1');
-  plain = plain.replace(/_(.+?)_/g, '$1');
-  plain = plain.replace(/^\s*[-*+]\s+/gm, '• ');
-  plain = plain.replace(/^\s*\d+\.\s+/gm, '');
-  
-  // Clean up extra whitespace
-  plain = plain.replace(/\n\n+/g, '\n\n');
-  plain = plain.trim();
-  
-  return plain;
+
+  let html = text;
+
+  // ---- STEP 1: Render math FIRST (before any markdown processing) ----
+
+  // Block math $$...$$ (must be before single $)
+  html = html.replace(/\$\$([\s\S]*?)\$\$/g, (_, math) =>
+    renderKatex(math, true)
+  );
+
+  // Block math \[...\]
+  html = html.replace(/\\\[([\s\S]*?)\\\]/g, (_, math) =>
+    renderKatex(math, true)
+  );
+
+  // Inline math \(...\)
+  html = html.replace(/\\\(([\s\S]*?)\\\)/g, (_, math) =>
+    renderKatex(math, false)
+  );
+
+  // Inline math $...$ (single dollar, not inside katex output)
+  html = html.replace(/\$([^\$\n]+)\$/g, (_, math) => {
+    // Skip if it looks like it's already inside rendered katex
+    if (math.includes('class="katex"')) return `$${math}$`;
+    return renderKatex(math, false);
+  });
+
+  // ---- STEP 2: Clean markdown syntax ----
+
+  // Remove --- horizontal rules
+  html = html.replace(/^---+$/gm, '<hr class="my-3 border-slate-300 dark:border-slate-600"/>');
+
+  // Headings → bold text
+  html = html.replace(/^#{1,6}\s+(.+)$/gm, '<strong class="block text-base mt-3 mb-1">$1</strong>');
+
+  // Bold/italic
+  html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, '<em>$1</em>');
+  html = html.replace(/___(.+?)___/g, '<strong><em>$1</em></strong>');
+  html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
+
+  // Inline code
+  html = html.replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-sm font-mono">$1</code>');
+
+  // Unordered lists
+  html = html.replace(/^[\t ]*[-*+]\s+(.+)$/gm, '<li>$1</li>');
+  // Wrap consecutive <li> in <ul>
+  html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul class="list-disc pl-5 my-2 space-y-1">$1</ul>');
+
+  // Ordered lists
+  html = html.replace(/^\s*\d+\.\s+(.+)$/gm, '<li>$1</li>');
+
+  // Paragraphs: double newlines
+  html = html.replace(/\n\n+/g, '</p><p>');
+  // Single newlines (but not inside katex)
+  html = html.replace(/\n/g, '<br/>');
+
+  // Wrap in paragraph
+  if (!html.startsWith('<')) {
+    html = `<p>${html}</p>`;
+  }
+
+  return html;
 }
 
 /**
- * Checks if text contains markdown syntax
+ * Process user message (minimal formatting, just math + line breaks)
  */
-export function hasMarkdown(text: string): boolean {
-  if (!text) return false;
-  
-  const markdownPatterns = [
-    /^#{1,6}\s+/m,           // Headings
-    /\*\*(.+?)\*\*/,          // Bold
-    /\*(.+?)\*/,              // Italic
-    /__(.+?)__/,              // Bold (underscores)
-    /_(.+?)_/,                // Italic (underscores)
-    /^\s*[-*+]\s+/m,          // Unordered lists
-    /^\s*\d+\.\s+/m,          // Ordered lists
-    /\[.+?\]\(.+?\)/,         // Links
-    /!\[.+?\]\(.+?\)/,        // Images
-  ];
-  
-  return markdownPatterns.some(pattern => pattern.test(text));
+export function processUserMessage(text: string): string {
+  if (!text) return '';
+
+  let html = text;
+
+  // Render math
+  html = html.replace(/\$\$([\s\S]*?)\$\$/g, (_, m) => renderKatex(m, true));
+  html = html.replace(/\\\[([\s\S]*?)\\\]/g, (_, m) => renderKatex(m, true));
+  html = html.replace(/\\\(([\s\S]*?)\\\)/g, (_, m) => renderKatex(m, false));
+  html = html.replace(/\$([^\$\n]+)\$/g, (_, m) => renderKatex(m, false));
+
+  // Line breaks
+  html = html.replace(/\n/g, '<br/>');
+
+  return html;
 }
