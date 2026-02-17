@@ -29,7 +29,7 @@ const WEEK_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 // Backend weeklyActivity: 0=Sun, 1=Mon, ... 6=Sat. Display Mon–Sun.
 const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
 
-export default function RightSidebar({ summary, streak, timeline, topics }: RightSidebarProps) {
+export default function RightSidebar({ summary, streak, timeline: _timeline, topics }: RightSidebarProps) {
   const maxTopicCount = Math.max(1, ...topics.map((t) => t.count));
   const topTopics = topics.slice(0, 5).map((t) => ({
     ...t,
@@ -41,9 +41,9 @@ export default function RightSidebar({ summary, streak, timeline, topics }: Righ
   const streakDays = streak?.currentStreak ?? 0;
 
   return (
-    <aside className="flex h-full w-80 flex-col overflow-y-auto border-l border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-      <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
-        <LineChart className="h-5 w-5 text-emerald-500" />
+    <aside className="flex h-full w-80 flex-col overflow-y-auto border-l border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+      <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
+        <LineChart className="h-5 w-5 text-violet-500" />
         Learning Insights
       </h3>
 
@@ -51,23 +51,23 @@ export default function RightSidebar({ summary, streak, timeline, topics }: Righ
         {topTopics.length > 0 && (
           <Card className="overflow-hidden">
             <CardHeader className="py-2.5 pb-1">
-              <CardTitle className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              <CardTitle className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Most Asked Topics
               </CardTitle>
-              <p className="text-xs text-gray-400 dark:text-gray-500">Based on last 30 days</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">Based on last 30 days</p>
             </CardHeader>
             <CardContent className="space-y-3 pb-3">
               {topTopics.map((t, i) => (
                 <div key={t.topic}>
                   <div className="mb-1 flex justify-between text-xs">
-                    <span className="truncate text-gray-700 dark:text-gray-300">{t.topic}</span>
-                    <span className="tabular-nums text-gray-500">{t.percent}%</span>
+                    <span className="truncate text-slate-700 dark:text-slate-300">{t.topic}</span>
+                    <span className="tabular-nums text-slate-500">{t.percent}%</span>
                   </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+                  <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                     <div
                       className={cn(
                         'h-full rounded-full',
-                        i % 2 === 0 ? 'bg-emerald-500' : 'bg-violet-500'
+                        i % 2 === 0 ? 'bg-violet-500' : 'bg-violet-400'
                       )}
                       style={{ width: `${t.percent}%` }}
                     />
@@ -80,10 +80,10 @@ export default function RightSidebar({ summary, streak, timeline, topics }: Righ
 
         <Card className="overflow-hidden">
           <CardHeader className="py-2.5 pb-1">
-            <CardTitle className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+            <CardTitle className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Study Consistency
             </CardTitle>
-            <p className="text-xs text-gray-400 dark:text-gray-500">This week</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500">This week</p>
           </CardHeader>
           <CardContent className="pb-3">
             <div className="mb-2 flex justify-between">
@@ -94,8 +94,8 @@ export default function RightSidebar({ summary, streak, timeline, topics }: Righ
                     className={cn(
                       'flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium',
                       weekActivity[i] > 0
-                        ? 'bg-emerald-500 text-white'
-                        : 'bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500'
+                        ? 'bg-violet-500 text-white'
+                        : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500'
                     )}
                   >
                     {label}
@@ -104,8 +104,8 @@ export default function RightSidebar({ summary, streak, timeline, topics }: Righ
               </div>
             </div>
             <p className="text-sm">
-              <span className="font-bold text-emerald-500">{streakDays} days</span>
-              <span className="text-gray-500 dark:text-gray-400"> streak</span>
+              <span className="font-bold text-violet-500">{streakDays} days</span>
+              <span className="text-slate-500 dark:text-slate-400"> streak</span>
             </p>
           </CardContent>
         </Card>
@@ -113,14 +113,14 @@ export default function RightSidebar({ summary, streak, timeline, topics }: Righ
         <div className="grid grid-cols-1 gap-3">
           <Card className="overflow-hidden">
             <CardContent className="flex items-center gap-3 p-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-900/40">
-                <BarChart3 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/40">
+                <BarChart3 className="h-5 w-5 text-violet-600 dark:text-violet-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold tabular-nums text-gray-900 dark:text-white">
+                <p className="text-2xl font-bold tabular-nums text-slate-900 dark:text-white">
                   {summary?.doubtsSolved ?? 0}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Doubts Solved</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Doubts Solved</p>
               </div>
             </CardContent>
           </Card>
@@ -130,17 +130,17 @@ export default function RightSidebar({ summary, streak, timeline, topics }: Righ
                 <TrendingUp className="h-5 w-5 text-violet-600 dark:text-violet-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold tabular-nums text-gray-900 dark:text-white">
+                <p className="text-2xl font-bold tabular-nums text-slate-900 dark:text-white">
                   {summary?.quizAttempts ?? 0}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Quizzes Taken</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Quizzes Taken</p>
               </div>
             </CardContent>
           </Card>
         </div>
 
         {(summary?.doubtsSolved === 0 && summary?.quizAttempts === 0) || (!summary && topics.length === 0) ? (
-          <p className="text-center text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-center text-xs text-slate-500 dark:text-slate-400">
             Start chatting to see your insights here.
           </p>
         ) : null}

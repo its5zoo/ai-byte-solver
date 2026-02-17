@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import { Loader2, HelpCircle } from 'lucide-react';
 import Button from '../components/ui/Button';
 import api from '../lib/api';
@@ -21,7 +21,6 @@ interface Quiz {
 
 export default function QuizPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
-  const navigate = useNavigate();
   const [step, setStep] = useState<'generate' | 'quiz' | 'result'>('generate');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -38,7 +37,6 @@ export default function QuizPage() {
         sessionId,
         count: 5,
         difficulty: 'mixed',
-        aiProvider: 'ollama',
       });
       const quizId = data.quiz?.id ?? data.quiz?._id;
       if (!quizId) throw new Error('No quiz ID returned');
@@ -92,31 +90,31 @@ export default function QuizPage() {
 
   if (!sessionId) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gray-50 p-4 dark:bg-gray-950">
-        <p className="text-gray-600 dark:text-gray-400">No chat selected. Start a chat first, then open Quiz.</p>
-        <Link to="/chat" className="text-emerald-600 hover:underline dark:text-emerald-400">Back to Chat</Link>
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-50 p-4 dark:bg-slate-950">
+        <p className="text-slate-600 dark:text-slate-400">No chat selected. Start a chat first, then open Quiz.</p>
+        <Link to="/chat" className="text-violet-600 hover:underline dark:text-violet-400">Back to Chat</Link>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-950 dark:to-gray-900">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
       <div className="mx-auto max-w-2xl px-4 py-8">
         <Link
           to={`/chat/${sessionId}`}
-          className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-emerald-600 dark:text-gray-400 dark:hover:text-emerald-400"
+          className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-violet-600 dark:text-slate-400 dark:hover:text-violet-400"
         >
           ← Back to Chat
         </Link>
 
         {step === 'generate' && (
-          <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-lg dark:border-gray-700 dark:bg-gray-900">
+          <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-xl dark:border-slate-700 dark:bg-slate-900">
             <div className="flex flex-col items-center text-center">
-              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-100 dark:bg-emerald-900/40">
-                <HelpCircle className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-100 dark:bg-violet-900/40">
+                <HelpCircle className="h-8 w-8 text-violet-600 dark:text-violet-400" />
               </div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Generate Quiz</h1>
-              <p className="mt-2 text-gray-600 dark:text-gray-400">
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Generate Quiz</h1>
+              <p className="mt-2 text-slate-600 dark:text-slate-400">
                 AI will create a quiz from your chat. Make sure you have some messages in this chat.
               </p>
               {error && (
@@ -127,7 +125,7 @@ export default function QuizPage() {
               <Button
                 onClick={handleGenerate}
                 disabled={loading}
-                className="mt-6 rounded-xl bg-emerald-500 px-8 py-3 text-white hover:bg-emerald-600"
+                className="mt-6 rounded-xl bg-violet-600 px-8 py-3 text-white shadow-md shadow-violet-500/25 hover:bg-violet-700"
               >
                 {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Generate Quiz'}
               </Button>
@@ -137,7 +135,7 @@ export default function QuizPage() {
 
         {step === 'quiz' && quiz && (
           <div className="space-y-6">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{quiz.title}</h1>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{quiz.title}</h1>
             {error && (
               <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300">
                 {error}
@@ -147,9 +145,9 @@ export default function QuizPage() {
               {quiz.questions.map((q, idx) => (
                 <div
                   key={q.id}
-                  className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-900"
+                  className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
                 >
-                  <p className="mb-3 font-medium text-gray-900 dark:text-white">
+                  <p className="mb-3 font-medium text-slate-900 dark:text-white">
                     {idx + 1}. {q.question}
                   </p>
                   {q.type === 'mcq' && q.options && (
@@ -157,16 +155,16 @@ export default function QuizPage() {
                       {q.options.map((opt, i) => (
                         <label
                           key={i}
-                          className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 transition hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
+                          className="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 px-4 py-3 transition hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800"
                         >
                           <input
                             type="radio"
                             name={q.id}
                             checked={answers[q.id]?.selectedOption === i}
                             onChange={() => setAnswer(q.id, i, 'mcq')}
-                            className="h-4 w-4 text-emerald-600"
+                            className="h-4 w-4 text-violet-600"
                           />
-                          <span className="text-gray-800 dark:text-gray-200">{opt}</span>
+                          <span className="text-slate-800 dark:text-slate-200">{opt}</span>
                         </label>
                       ))}
                     </div>
@@ -177,7 +175,7 @@ export default function QuizPage() {
                       value={answers[q.id]?.shortAnswer ?? ''}
                       onChange={(e) => setAnswer(q.id, e.target.value, 'short')}
                       placeholder="Your answer..."
-                      className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 placeholder:text-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-400"
+                      className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 placeholder:text-slate-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
                     />
                   )}
                 </div>
@@ -186,7 +184,7 @@ export default function QuizPage() {
             <Button
               onClick={handleSubmitAttempt}
               disabled={loading}
-              className="w-full rounded-xl bg-emerald-500 py-3 text-white hover:bg-emerald-600"
+              className="w-full rounded-xl bg-violet-600 py-3 text-white shadow-md hover:bg-violet-700"
             >
               {loading ? <Loader2 className="mx-auto h-5 w-5 animate-spin" /> : 'Submit Quiz'}
             </Button>
@@ -194,15 +192,15 @@ export default function QuizPage() {
         )}
 
         {step === 'result' && result && (
-          <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-lg dark:border-gray-700 dark:bg-gray-900">
+          <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-xl dark:border-slate-700 dark:bg-slate-900">
             <div className="flex flex-col items-center text-center">
-              <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40">
-                <span className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+              <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/40">
+                <span className="text-3xl font-bold text-violet-600 dark:text-violet-400">
                   {result.percentage}%
                 </span>
               </div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Quiz Complete</h1>
-              <p className="mt-2 text-gray-600 dark:text-gray-400">
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Quiz Complete</h1>
+              <p className="mt-2 text-slate-600 dark:text-slate-400">
                 You got {result.score} out of {result.total} correct.
               </p>
               <div className="mt-6 flex gap-3">
@@ -211,7 +209,7 @@ export default function QuizPage() {
                 </Link>
                 <Button
                   onClick={() => { setStep('generate'); setQuiz(null); setResult(null); }}
-                  className="rounded-xl bg-emerald-500 text-white hover:bg-emerald-600"
+                  className="rounded-xl bg-violet-600 text-white shadow-md hover:bg-violet-700"
                 >
                   New Quiz
                 </Button>

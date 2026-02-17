@@ -28,23 +28,23 @@ export default function DashboardHeader({ mode, onModeChange }: DashboardHeaderP
     .slice(0, 2) || '?';
 
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900">
+    <header className="flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white/90 px-4 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
       <div className="flex items-center gap-6">
         <Link to="/chat" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/25">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-600 text-white shadow-lg shadow-violet-500/30">
             <Brain className="h-5 w-5" />
           </div>
-          <span className="text-lg font-bold text-gray-900 dark:text-white">AI Byte Solver</span>
+          <span className="text-lg font-bold text-slate-900 dark:text-white">AI Byte Solver</span>
         </Link>
-        <div className="flex rounded-lg bg-gray-100 p-0.5 dark:bg-gray-800">
+        <div className="flex rounded-lg bg-slate-100 p-0.5 dark:bg-slate-800">
           <button
             type="button"
             onClick={() => onModeChange?.('syllabus')}
             className={cn(
               'rounded-md px-4 py-2 text-sm font-medium transition-colors',
               mode === 'syllabus'
-                ? 'bg-emerald-500 text-white shadow'
-                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+                ? 'bg-violet-600 text-white shadow-md'
+                : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
             )}
           >
             Syllabus Mode
@@ -55,8 +55,8 @@ export default function DashboardHeader({ mode, onModeChange }: DashboardHeaderP
             className={cn(
               'rounded-md px-4 py-2 text-sm font-medium transition-colors',
               mode === 'open'
-                ? 'bg-emerald-500 text-white shadow'
-                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+                ? 'bg-violet-600 text-white shadow-md'
+                : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
             )}
           >
             Open Mode
@@ -67,17 +67,17 @@ export default function DashboardHeader({ mode, onModeChange }: DashboardHeaderP
       <div className="flex items-center gap-3">
         <Link
           to="/profile"
-          className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
+          className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
         >
           <span>Hello, {user?.name?.split(' ')[0] || 'User'}</span>
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 text-sm font-semibold text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-100 text-sm font-semibold text-violet-700 dark:bg-violet-900/50 dark:text-violet-300">
             {initials}
           </div>
         </Link>
         <button
           type="button"
           onClick={toggleTheme}
-          className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+          className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
           aria-label="Toggle theme"
         >
           {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
@@ -88,7 +88,7 @@ export default function DashboardHeader({ mode, onModeChange }: DashboardHeaderP
             useAuthStore.getState().logout();
             window.location.href = '/login';
           }}
-          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
+          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
         >
           <LogOut className="h-4 w-4" />
           Logout

@@ -4,7 +4,7 @@
 import UploadedPDF from '../models/UploadedPDF.js';
 
 const OLLAMA_BASE = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'gemma3:1b';
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'gpt-oss:120b-cloud';
 
 const BASE_SYSTEM = `You are AI Byte Solver, an education-focused AI doubt-solving assistant for students.
 Your role is strictly academic: help students understand concepts, solve doubts, and prepare for exams.

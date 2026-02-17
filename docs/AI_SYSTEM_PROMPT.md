@@ -1,11 +1,6 @@
 # AI Byte Solver — System Prompt & Mode Logic
 
-## Hybrid Smart Architecture
-
-| Mode | Provider | Cost | Use Case |
-|------|----------|------|----------|
-| **Default (FREE)** | Ollama + Llama 3 | Zero cost | PDF syllabus answers, high accuracy |
-| **Optional Premium** | Gemini | Controlled usage | Advanced reasoning only |
+The app uses **Ollama** (local AI) for chat and quiz. No cloud API keys required.
 
 ---
 

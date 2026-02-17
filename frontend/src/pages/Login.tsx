@@ -35,10 +35,10 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900/30 p-4 dark:from-gray-950 dark:via-slate-900 dark:to-emerald-950/20">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-violet-950/50 to-slate-900 p-4 dark:from-slate-950 dark:via-violet-950/30 dark:to-slate-950">
       <div className="w-full max-w-md">
         <div className="mb-8 flex flex-col items-center gap-3 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500 shadow-lg shadow-emerald-500/30">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-600 shadow-lg shadow-violet-500/40">
             <Brain className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-white">AI Byte Solver</h1>
@@ -46,8 +46,8 @@ export default function Login() {
         </div>
 
         <div className="rounded-2xl border border-slate-700/50 bg-white/95 p-8 shadow-2xl backdrop-blur dark:border-slate-600/50 dark:bg-slate-900/95">
-          <h2 className="mb-1 text-xl font-semibold text-gray-900 dark:text-white">Login</h2>
-          <p className="mb-6 text-sm text-gray-600 dark:text-gray-400">Enter your credentials</p>
+          <h2 className="mb-1 text-xl font-semibold text-slate-900 dark:text-white">Login</h2>
+          <p className="mb-6 text-sm text-slate-600 dark:text-slate-400">Enter your credentials</p>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
@@ -57,11 +57,11 @@ export default function Login() {
             )}
 
             <div>
-              <label htmlFor="login-email" className="mb-2 block text-sm font-medium text-gray-800 dark:text-gray-200">
+              <label htmlFor="login-email" className="mb-2 block text-sm font-medium text-slate-800 dark:text-slate-200">
                 Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
                 <input
                   id="login-email"
                   type="email"
@@ -69,17 +69,17 @@ export default function Login() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   required
-                  className="w-full rounded-xl border border-gray-300 bg-white py-3 pl-10 pr-4 text-gray-900 placeholder:text-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400"
+                  className="w-full rounded-xl border border-slate-300 bg-white py-3 pl-10 pr-4 text-slate-900 placeholder:text-slate-500 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-400"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="login-password" className="mb-2 block text-sm font-medium text-gray-800 dark:text-gray-200">
+              <label htmlFor="login-password" className="mb-2 block text-sm font-medium text-slate-800 dark:text-slate-200">
                 Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
                 <input
                   id="login-password"
                   type="password"
@@ -87,7 +87,7 @@ export default function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  className="w-full rounded-xl border border-gray-300 bg-white py-3 pl-10 pr-4 text-gray-900 placeholder:text-gray-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400"
+                  className="w-full rounded-xl border border-slate-300 bg-white py-3 pl-10 pr-4 text-slate-900 placeholder:text-slate-500 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-400"
                 />
               </div>
             </div>
@@ -95,15 +95,15 @@ export default function Login() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl bg-emerald-500 py-3 text-base font-semibold text-white hover:bg-emerald-600"
+              className="w-full rounded-xl bg-violet-600 py-3 text-base font-semibold text-white shadow-md hover:bg-violet-700"
             >
               {loading ? <Loader2 className="mx-auto h-5 w-5 animate-spin" /> : 'Login'}
             </Button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+          <p className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
             Don't have an account?{' '}
-            <Link to="/register" className="font-semibold text-emerald-600 hover:text-emerald-500 dark:text-emerald-400">
+            <Link to="/register" className="font-semibold text-violet-600 hover:text-violet-500 dark:text-violet-400">
               Register
             </Link>
           </p>

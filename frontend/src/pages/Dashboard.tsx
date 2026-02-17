@@ -11,8 +11,8 @@ interface Session {
   _id: string;
   title: string;
   mode: 'syllabus' | 'open';
-  aiProvider?: 'ollama' | 'gemini';
   lastMessageAt?: string;
+  pdfId?: string | { _id: string; originalName: string } | null;
 }
 
 interface Message {
@@ -102,17 +102,15 @@ export default function Dashboard() {
     setMessages([]);
   };
 
-  const handleSend = async (content: string, aiProvider?: 'ollama' | 'gemini') => {
+  const handleSend = async (content: string) => {
     let activeSessionId = sessionId;
     if (!activeSessionId) {
-      if (!aiProvider) return;
       setIsLoading(true);
       setChatError(null);
       try {
         const { data } = await api.post('/chat/sessions', {
           title: 'New Chat',
           mode: defaultMode,
-          aiProvider,
         });
         const newId = data?.session?._id;
         if (!newId) throw new Error('No session ID returned');
@@ -190,15 +188,63 @@ export default function Dashboard() {
     }
   };
 
+  const handleAttachPdf = async (pdfId: string) => {
+    if (!sessionId) return;
+    try {
+      const { data } = await api.patch(`/chat/sessions/${sessionId}`, { pdfId });
+      setCurrentSession(data.session);
+    } catch (_) {
+      // ignore
+    }
+  };
+
+  const handleDetachPdf = async () => {
+    if (!sessionId) return;
+    try {
+      const { data } = await api.patch(`/chat/sessions/${sessionId}`, { pdfId: null });
+      setCurrentSession(data.session);
+    } catch (_) {
+      // ignore
+    }
+  };
+
+  const handleDeletePdf = async (pdfId: string) => {
+    try {
+      await api.delete(`/pdf/${pdfId}`);
+      fetchPdfs();
+      if (currentSession?.pdfId && (typeof currentSession.pdfId === 'string' ? currentSession.pdfId : currentSession.pdfId._id) === pdfId) {
+        await handleDetachPdf();
+      }
+    } catch (_) {
+      // ignore
+    }
+  };
+
+  const attachedPdfId = currentSession?.pdfId
+    ? typeof currentSession.pdfId === 'object' && currentSession.pdfId !== null
+      ? (currentSession.pdfId as { _id: string })._id
+      : (currentSession.pdfId as string)
+    : null;
+  const attachedPdfName = currentSession?.pdfId && typeof currentSession.pdfId === 'object'
+    ? (currentSession.pdfId as { originalName: string }).originalName
+    : null;
+
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-950">
+    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
       <LeftSidebar
         sessions={sessions}
+        pdfs={pdfs}
+        sessionId={sessionId || null}
+        attachedPdfId={attachedPdfId}
+        attachedPdfName={attachedPdfName}
         onNewChat={handleNewChat}
         onUploadClick={() => setIsUploadOpen((v) => !v)}
         onDeleteSession={handleDeleteSession}
+        onAttachPdf={handleAttachPdf}
+        onDetachPdf={handleDetachPdf}
+        onDeletePdf={handleDeletePdf}
       />
-      <main className="flex flex-1 flex-col overflow-hidden">
+      <main className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <DashboardHeader
           mode={currentSession?.mode ?? defaultMode}
           onModeChange={sessionId ? handleModeChange : (m) => setDefaultMode(m)}
@@ -211,7 +257,6 @@ export default function Dashboard() {
           error={chatError}
           onDismissError={() => setChatError(null)}
           mode={currentSession?.mode || 'syllabus'}
-          aiProvider={currentSession?.aiProvider || 'ollama'}
         />
       </main>
       <RightSidebar

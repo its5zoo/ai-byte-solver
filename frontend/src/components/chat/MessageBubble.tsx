@@ -49,8 +49,8 @@ export default function MessageBubble({ message }: { message: Message }) {
         className={cn(
           'flex h-9 w-9 shrink-0 items-center justify-center rounded-full',
           isUser
-            ? 'bg-emerald-500 text-white'
-            : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400'
+            ? 'bg-violet-600 text-white'
+            : 'bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-400'
         )}
       >
         {isUser ? <User className="h-4 w-4" /> : <Brain className="h-4 w-4" />}
@@ -59,8 +59,8 @@ export default function MessageBubble({ message }: { message: Message }) {
         className={cn(
           'max-w-[85%] rounded-2xl px-4 py-3 shadow-sm',
           isUser
-            ? 'bg-emerald-500 text-white'
-            : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600'
+            ? 'bg-violet-600 text-white shadow-md shadow-violet-500/20'
+            : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600'
         )}
       >
         <div
@@ -68,8 +68,8 @@ export default function MessageBubble({ message }: { message: Message }) {
           className={cn(
             'prose prose-sm max-w-none dark:prose-invert break-words',
             isUser
-              ? 'text-white [&_*]:text-white [&_a]:text-emerald-200'
-              : 'text-gray-900 dark:text-gray-100 [&_*]:text-gray-900 [&_*]:dark:text-gray-100'
+              ? 'text-white [&_*]:text-white [&_a]:text-violet-200'
+              : 'text-slate-900 dark:text-slate-100 [&_*]:text-slate-900 [&_*]:dark:text-slate-100'
           )}
         />
       </div>
