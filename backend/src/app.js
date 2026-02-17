@@ -11,7 +11,24 @@ import userRoutes from './routes/userRoutes.js';
 
 const app = express();
 
-app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173', credentials: true }));
+// Allow multiple frontend origins (Vite may use 5173 or 5174+)
+const allowedOrigins = [
+    process.env.FRONTEND_URL || 'http://localhost:5173',
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:5175',
+];
+app.use(cors({
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl)
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(null, true); // Allow all origins in development
+        }
+    },
+    credentials: true,
+}));
 app.use(express.json());
 
 app.use('/api/v1/auth', authRoutes);
