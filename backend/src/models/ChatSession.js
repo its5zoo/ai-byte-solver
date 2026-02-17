@@ -18,7 +18,7 @@ const chatSessionSchema = new mongoose.Schema(
     },
     aiProvider: {
       type: String,
-      enum: ['ollama', 'gemini'],
+      enum: ['ollama'],
       default: 'ollama',
     },
     pdfId: {

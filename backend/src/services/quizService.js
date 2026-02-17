@@ -1,7 +1,5 @@
 /**
- * Quiz generation - Hybrid Smart Architecture
- * Default: Ollama + Llama 3 (FREE)
- * Premium: Gemini (advanced reasoning, optional)
+ * Quiz generation - Ollama only
  */
 import ChatSession from '../models/ChatSession.js';
 import ChatMessage from '../models/ChatMessage.js';
@@ -9,7 +7,7 @@ import Quiz from '../models/Quiz.js';
 import { AppError } from '../middleware/errorHandler.js';
 
 const OLLAMA_BASE = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3.2';
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'gemma3:1b';
 
 const callOllama = async (prompt) => {
   const url = `${OLLAMA_BASE}/api/chat`;
@@ -22,22 +20,17 @@ const callOllama = async (prompt) => {
       stream: false,
     }),
   });
-  if (!res.ok) throw new Error(`Ollama error: ${res.status}. Ensure Ollama is running.`);
+  if (!res.ok) {
+    const hint = res.status === 404
+      ? `Model "${OLLAMA_MODEL}" not found. Run: ollama pull ${OLLAMA_MODEL} && ollama run ${OLLAMA_MODEL}`
+      : `Ensure Ollama is running at ${OLLAMA_BASE}.`;
+    throw new Error(`Ollama error: ${res.status}. ${hint}`);
+  }
   const data = await res.json();
   return data.message?.content || '[]';
 };
 
-const callGemini = async (prompt) => {
-  const key = process.env.GEMINI_API_KEY;
-  if (!key) throw new Error('GEMINI_API_KEY required for premium quiz. Use free mode.');
-  const { GoogleGenerativeAI } = await import('@google/generative-ai');
-  const genAI = new GoogleGenerativeAI(key);
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-  const result = await model.generateContent(prompt);
-  return result.response.text();
-};
-
-export const generateQuiz = async (userId, sessionId, count = 5, difficulty = 'mixed', aiProvider = 'ollama') => {
+export const generateQuiz = async (userId, sessionId, count = 5, difficulty = 'mixed') => {
   const session = await ChatSession.findOne({ _id: sessionId, userId }).lean();
   if (!session) throw new AppError('Session not found', 404, 'NOT_FOUND');
 
@@ -66,8 +59,7 @@ Requirements:
   { "type": "short", "question": "...", "correctAnswer": "...", "topic": "...", "difficulty": "easy|medium|hard" }
 ]`;
 
-  const raw =
-    aiProvider === 'gemini' ? await callGemini(prompt) : await callOllama(prompt);
+  const raw = await callOllama(prompt);
 
   const cleaned = raw.replace(/```json?\s*/g, '').replace(/```\s*/g, '').trim();
   let questions;

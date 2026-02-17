@@ -1,15 +1,15 @@
 /**
- * Hybrid Smart Architecture - AI Byte Solver
- * Default: Ollama + Llama 3 (FREE, zero cost, high accuracy)
- * Premium: Gemini (advanced reasoning, controlled usage)
+ * AI Byte Solver - Ollama only
  */
 import UploadedPDF from '../models/UploadedPDF.js';
 
 const OLLAMA_BASE = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3.2';
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'gemma3:1b';
 
 const BASE_SYSTEM = `You are AI Byte Solver, an education-focused AI doubt-solving assistant for students.
 Your role is strictly academic: help students understand concepts, solve doubts, and prepare for exams.
+
+CRITICAL: Answer ONLY the exact question the user asked. Do not substitute or confuse with other topics (e.g. if they ask about Green's theorem, do NOT answer about Newton's laws or inertial force; if they ask about one concept, answer that concept only).
 
 CONSTRAINTS:
 - Never generate non-academic content (games, stories, jokes, non-educational material).
@@ -37,20 +37,26 @@ MODE: Open Source Mode
 export const buildSystemPrompt = async (mode, pdfId) => {
   let system = BASE_SYSTEM;
 
-  if (mode === 'syllabus' && pdfId) {
-    const pdf = await UploadedPDF.findById(pdfId).lean();
-    if (pdf?.extractedText) {
-      system +=
-        SYLLABUS_MODE_ADDON +
-        `
+  if (mode === 'syllabus') {
+    if (pdfId) {
+      const pdf = await UploadedPDF.findById(pdfId).lean();
+      if (pdf?.extractedText) {
+        system +=
+          SYLLABUS_MODE_ADDON +
+          `
 
 ## Syllabus Content (from: ${pdf.originalName})
 
 ${pdf.extractedText.substring(0, 12000)}
 
 Use ONLY the above content to answer. Cite: "From ${pdf.originalName}, [topic]: ..."`;
+      } else {
+        system += SYLLABUS_MODE_ADDON + '\n\nNo syllabus content available for this PDF. Ask user to re-upload or switch to Open Mode.';
+      }
     } else {
-      system += SYLLABUS_MODE_ADDON + '\n\nNo syllabus content available. Ask user to upload a PDF.';
+      system +=
+        SYLLABUS_MODE_ADDON +
+        '\n\nNo syllabus PDF is attached to this chat. Answer from your knowledge but say: "No PDF is attached for syllabus mode. Upload a PDF in the sidebar for answers from your materials." Do not confuse the user\'s topic with other topics.';
     }
   } else {
     system += OPEN_MODE_ADDON;
@@ -59,9 +65,6 @@ Use ONLY the above content to answer. Cite: "From ${pdf.originalName}, [topic]: 
   return system;
 };
 
-/**
- * Ollama (FREE) - Uses Llama 3, zero cost, local inference
- */
 const callOllama = async (messages, stream = false) => {
   const url = `${OLLAMA_BASE}/api/chat`;
   const body = {
@@ -78,30 +81,15 @@ const callOllama = async (messages, stream = false) => {
 
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`Ollama error: ${res.status}. Ensure Ollama is running: ollama run ${OLLAMA_MODEL}`);
+    const hint = res.status === 404
+      ? `Model "${OLLAMA_MODEL}" not found. Run: ollama pull ${OLLAMA_MODEL} && ollama run ${OLLAMA_MODEL}`
+      : `Ensure Ollama is running at ${OLLAMA_BASE}: ollama run ${OLLAMA_MODEL}`;
+    throw new Error(`Ollama error: ${res.status}. ${hint}`);
   }
 
   return res;
 };
 
-/**
- * Gemini (PREMIUM) - Advanced reasoning, requires API key
- */
-let geminiModel = null;
-const getGemini = async () => {
-  const key = process.env.GEMINI_API_KEY;
-  if (!key) throw new Error('GEMINI_API_KEY required for premium mode. Use free mode (Ollama) instead.');
-  if (!geminiModel) {
-    const { GoogleGenerativeAI } = await import('@google/generative-ai');
-    const genAI = new GoogleGenerativeAI(key);
-    geminiModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-  }
-  return geminiModel;
-};
-
-/**
- * Unified streaming: yields { content: string } chunks
- */
 async function* streamOllama(body) {
   const reader = body.getReader();
   const decoder = new TextDecoder();
@@ -123,48 +111,16 @@ async function* streamOllama(body) {
   }
 }
 
-async function* streamGemini(stream) {
-  for await (const chunk of stream) {
-    const text = typeof chunk.text === 'function' ? chunk.text() : (chunk.text || '');
-    if (text) yield { content: text };
-  }
-}
-
-/**
- * Main AI interface - streaming response (async iterable)
- */
-export const getAIResponse = async function* (messages, mode, pdfId, aiProvider = 'ollama') {
+export const getAIResponse = async function* (messages, mode, pdfId) {
   const systemPrompt = await buildSystemPrompt(mode, pdfId);
   const apiMessages = [{ role: 'system', content: systemPrompt }, ...messages];
-
-  if (aiProvider === 'gemini') {
-    const model = await getGemini();
-    const systemMsg = apiMessages.find((m) => m.role === 'system');
-    const lastMsg = apiMessages[apiMessages.length - 1];
-    const fullPrompt = systemMsg ? `${systemMsg.content}\n\n${lastMsg?.content || ''}` : lastMsg?.content || '';
-    const result = await model.generateContentStream(fullPrompt);
-    yield* streamGemini(result.stream);
-  } else {
-    const res = await callOllama(apiMessages, true);
-    yield* streamOllama(res.body);
-  }
+  const res = await callOllama(apiMessages, true);
+  yield* streamOllama(res.body);
 };
 
-/**
- * Main AI interface - non-streaming response
- */
-export const getAIResponseNonStream = async (messages, mode, pdfId, aiProvider = 'ollama') => {
+export const getAIResponseNonStream = async (messages, mode, pdfId) => {
   const systemPrompt = await buildSystemPrompt(mode, pdfId);
   const apiMessages = [{ role: 'system', content: systemPrompt }, ...messages];
-
-  if (aiProvider === 'gemini') {
-    const model = await getGemini();
-    const systemMsg = apiMessages.find((m) => m.role === 'system');
-    const lastMsg = apiMessages[apiMessages.length - 1];
-    const fullPrompt = systemMsg ? `${systemMsg.content}\n\n${lastMsg?.content || ''}` : lastMsg?.content || '';
-    const result = await model.generateContent(fullPrompt);
-    return result.response.text();
-  }
 
   const url = `${OLLAMA_BASE}/api/chat`;
   const res = await fetch(url, {
@@ -179,7 +135,10 @@ export const getAIResponseNonStream = async (messages, mode, pdfId, aiProvider =
 
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`Ollama error: ${res.status}. Ensure Ollama is running: ollama run ${OLLAMA_MODEL}`);
+    const hint = res.status === 404
+      ? `Model "${OLLAMA_MODEL}" not found. Run: ollama pull ${OLLAMA_MODEL} && ollama run ${OLLAMA_MODEL}`
+      : `Ensure Ollama is running at ${OLLAMA_BASE}: ollama run ${OLLAMA_MODEL}`;
+    throw new Error(`Ollama error: ${res.status}. ${hint}`);
   }
 
   const data = await res.json();

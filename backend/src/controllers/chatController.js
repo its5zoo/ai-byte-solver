@@ -25,13 +25,13 @@ const updateDailyStats = async (userId, doubtsDelta = 1, timeDelta = 0, topics =
 
 export const createSession = async (req, res, next) => {
   try {
-    const { title, mode, pdfId, aiProvider } = req.body;
+    const { title, mode, pdfId } = req.body;
     const session = await ChatSession.create({
       userId: req.user.id,
       title: title || 'New Chat',
       mode: mode || 'syllabus',
       pdfId: pdfId || null,
-      aiProvider: aiProvider === 'gemini' ? 'gemini' : 'ollama',
+      aiProvider: 'ollama',
     });
     res.status(201).json({ success: true, session });
   } catch (err) {
@@ -75,11 +75,14 @@ export const updateSession = async (req, res, next) => {
   try {
     const allowed = {};
     if (req.body.mode && ['syllabus', 'open'].includes(req.body.mode)) allowed.mode = req.body.mode;
+    if (req.body.pdfId !== undefined) allowed.pdfId = req.body.pdfId || null;
     const session = await ChatSession.findOneAndUpdate(
       { _id: req.params.id, userId: req.user.id },
       { $set: allowed },
       { new: true }
-    ).lean();
+    )
+      .populate('pdfId', 'originalName')
+      .lean();
     if (!session) throw new AppError('Session not found', 404, 'NOT_FOUND');
     res.json({ success: true, session });
   } catch (err) {
@@ -130,8 +133,7 @@ export const sendMessage = async (req, res, next) => {
       res.setHeader('Connection', 'keep-alive');
       res.flushHeaders();
 
-      const aiProvider = session.aiProvider || 'ollama';
-      const stream = getAIResponse(messages, session.mode, session.pdfId, aiProvider);
+      const stream = getAIResponse(messages, session.mode, session.pdfId);
 
       let fullContent = '';
       for await (const chunk of stream) {
@@ -159,8 +161,7 @@ export const sendMessage = async (req, res, next) => {
       res.write(`data: ${JSON.stringify({ done: true, messageId: aiMsg._id })}\n\n`);
       res.end();
     } else {
-      const aiProvider = session.aiProvider || 'ollama';
-      const aiContent = await getAIResponseNonStream(messages, session.mode, session.pdfId, aiProvider);
+      const aiContent = await getAIResponseNonStream(messages, session.mode, session.pdfId);
 
       const aiMsg = await ChatMessage.create({
         sessionId,

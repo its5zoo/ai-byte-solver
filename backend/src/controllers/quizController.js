@@ -13,10 +13,10 @@ const startOfDay = (d) => {
 
 export const generate = async (req, res, next) => {
   try {
-    const { sessionId, count = 5, difficulty = 'mixed', aiProvider = 'ollama' } = req.body;
+    const { sessionId, count = 5, difficulty = 'mixed' } = req.body;
     if (!sessionId) throw new AppError('sessionId required', 422, 'VALIDATION_ERROR');
 
-    const quiz = await generateQuiz(req.user.id, sessionId, count, difficulty, aiProvider);
+    const quiz = await generateQuiz(req.user.id, sessionId, count, difficulty);
 
     res.status(201).json({
       success: true,
