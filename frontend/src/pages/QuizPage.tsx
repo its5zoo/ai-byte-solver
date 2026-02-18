@@ -13,15 +13,35 @@ import remarkBreaks from 'remark-breaks';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 
-function normalizeMathMarkdown(input: string) {
-  // Some model outputs contain doubled escaping like \\( ... \\).
-  const s = (input || '').replace(/\\\\/g, '\\');
-  // Convert \( \) / \[ \] into $ / $$ for remark-math.
-  return s
-    .replace(/\\\[/g, '$$')
-    .replace(/\\\]/g, '$$')
-    .replace(/\\\(/g, '$')
-    .replace(/\\\)/g, '$');
+// Bare LaTeX command patterns that should be wrapped in $...$
+const BARE_LATEX_RE = /(?<!\$)(\\(?:dfrac|frac|sqrt|omega|alpha|beta|gamma|delta|theta|lambda|mu|pi|sigma|phi|psi|Omega|Alpha|Beta|Gamma|Delta|Theta|Lambda|Sigma|Phi|Psi|vec|hat|bar|dot|ddot|tilde|mathbf|mathrm|mathit|text|left|right|cdot|times|div|pm|mp|leq|geq|neq|approx|infty|partial|nabla|sum|prod|int|lim|log|ln|sin|cos|tan|sec|csc|cot|arcsin|arccos|arctan)\b(?:\{[^}]*\})*(?:_\{?[^}\s]*\}?)?(?:\^\{?[^}\s]*\}?)?)(?!\$)/g;
+
+function normalizeMathMarkdown(input: string): string {
+  if (!input) return '';
+
+  // Fix doubled escaping like \\( ... \\) → \( ... \)
+  let s = input.replace(/\\\\/g, '\\');
+
+  // Convert \[ \] block math → $$ $$
+  s = s.replace(/\\\[/g, '\n$$\n').replace(/\\\]/g, '\n$$\n');
+
+  // Convert \( \) inline math → $ $
+  s = s.replace(/\\\(/g, '$').replace(/\\\)/g, '$');
+
+  // Wrap bare LaTeX commands (e.g. \omega_0, \dfrac{m}{2}) in $...$
+  // Only if not already inside a $ ... $ block
+  // Strategy: split on existing $...$ regions, only process non-math segments
+  const parts = s.split(/(\$\$[\s\S]*?\$\$|\$[^$\n]+\$)/g);
+  s = parts.map((part, i) => {
+    // Even-indexed parts are outside math delimiters
+    if (i % 2 === 0) {
+      // Wrap bare LaTeX sequences in $...$
+      return part.replace(BARE_LATEX_RE, '$$$1$$$');
+    }
+    return part;
+  }).join('');
+
+  return s;
 }
 
 function QuizText({ text, className }: { text: string; className?: string }) {
@@ -94,9 +114,10 @@ export default function QuizPage() {
       if (q?.questions) {
         q.questions = q.questions
           .filter((qu: QuizQuestion) => qu.type === 'mcq')
-          .map((qu: { _id?: string; id?: string }) => ({
+          .map((qu: { _id?: string; id?: string;[key: string]: unknown }) => ({
             ...qu,
-            id: qu._id ?? qu.id,
+            // Normalize: always expose as `id` for consistent keying
+            id: (qu._id ?? qu.id ?? '') as string,
           }));
       }
 
@@ -118,8 +139,9 @@ export default function QuizPage() {
     setError('');
     try {
       const answersPayload = quiz.questions.map((q) => ({
-        questionId: q.id ?? (q as unknown as { _id: string })._id,
-        selectedOption: answers[q.id] ?? 0,
+        questionId: q.id,
+        // Only include answered questions; unanswered default to -1 (no match)
+        selectedOption: answers[q.id] !== undefined ? answers[q.id] : -1,
       }));
 
       const { data } = await api.post(`/quiz/${quiz._id}/attempt`, { answers: answersPayload });

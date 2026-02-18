@@ -55,21 +55,49 @@ function buildFocusedContext(messages) {
   };
 }
 
-function normalizeQuestions(raw, wantCount) {
-  const cleaned = String(raw || '').replace(/```json?\s*/g, '').replace(/```\s*/g, '').trim();
-  let parsed;
+function extractJsonArray(raw) {
+  const s = String(raw || '').trim();
+
+  // Strategy 1: strip code fences and try direct parse
+  const stripped = s.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
   try {
-    parsed = JSON.parse(cleaned);
-  } catch (_) {
-    parsed = [];
+    const parsed = JSON.parse(stripped);
+    if (Array.isArray(parsed)) return parsed;
+    // Sometimes model wraps in { questions: [...] }
+    if (parsed && Array.isArray(parsed.questions)) return parsed.questions;
+  } catch (_) { /* fall through */ }
+
+  // Strategy 2: find the first [...] block in the raw string
+  const arrayStart = s.indexOf('[');
+  const arrayEnd = s.lastIndexOf(']');
+  if (arrayStart !== -1 && arrayEnd > arrayStart) {
+    try {
+      const slice = s.slice(arrayStart, arrayEnd + 1);
+      const parsed = JSON.parse(slice);
+      if (Array.isArray(parsed)) return parsed;
+    } catch (_) { /* fall through */ }
   }
-  if (!Array.isArray(parsed)) parsed = [];
+
+  // Strategy 3: try to find JSON array inside code fences
+  const fenceMatch = s.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fenceMatch) {
+    try {
+      const parsed = JSON.parse(fenceMatch[1].trim());
+      if (Array.isArray(parsed)) return parsed;
+    } catch (_) { /* fall through */ }
+  }
+
+  return [];
+}
+
+function normalizeQuestions(raw, wantCount) {
+  const parsed = extractJsonArray(raw);
 
   const out = [];
   for (const q of parsed) {
     if (!q || typeof q !== 'object') continue;
     const question = typeof q.question === 'string' ? q.question.trim() : '';
-    const options = Array.isArray(q.options) ? q.options.map((o) => (typeof o === 'string' ? o.trim() : '')).filter(Boolean) : [];
+    const options = Array.isArray(q.options) ? q.options.map((o) => (typeof o === 'string' ? o.trim() : String(o || '').trim())).filter(Boolean) : [];
     const correctOption = Number.isFinite(Number(q.correctOption)) ? Number(q.correctOption) : 0;
     const explanation = typeof q.explanation === 'string' ? q.explanation.trim() : '';
     if (!question || options.length < 2) continue;
@@ -89,6 +117,7 @@ function normalizeQuestions(raw, wantCount) {
   }
   return out;
 }
+
 
 export const generateQuiz = async (userId, sessionId, count = 5, difficulty = 'easy') => {
   const session = await ChatSession.findOne({ _id: sessionId, userId }).lean();
@@ -160,7 +189,9 @@ export const evaluateAttempt = async (quizId, userId, answers) => {
     const ans = answers?.find((a) => a.questionId?.toString() === q._id?.toString());
     let isCorrect = false;
     if (q.type === 'mcq') {
-      isCorrect = Number(ans?.selectedOption) === Number(q.correctOption);
+      const selected = Number(ans?.selectedOption);
+      // -1 means unanswered; never matches a valid option
+      isCorrect = selected >= 0 && selected === Number(q.correctOption);
     } else {
       const given = (ans?.shortAnswer || '').trim().toLowerCase();
       const expected = (q.correctAnswer || '').trim().toLowerCase();
@@ -181,7 +212,12 @@ export const evaluateAttempt = async (quizId, userId, answers) => {
   }
 
   const total = quiz.questions?.length || 1;
-  const percentage = Math.round((correct / total) * 100);
+  const wrong = total - correct;
+
+  // Negative marking: +1 correct, -0.5 wrong
+  const netScore = correct * 1 + wrong * (-0.5);
+  const maxScore = total * 1;
+  const percentage = Math.min(100, Math.max(0, Math.round((netScore / maxScore) * 100)));
 
   return { score: correct, total, percentage, details };
 };

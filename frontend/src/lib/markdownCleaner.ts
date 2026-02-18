@@ -23,6 +23,25 @@ function renderKatex(expr: string, displayMode: boolean): string {
 }
 
 /**
+ * Wrap consecutive <li data-type="ul"> in <ul> and <li data-type="ol"> in <ol>
+ */
+function wrapLists(html: string): string {
+  // Wrap unordered list items
+  html = html.replace(/((?:<li data-type="ul">[\s\S]*?<\/li>\n?)+)/g, (match) => {
+    const items = match.replace(/<li data-type="ul">/g, '<li>');
+    return `<ul class="list-disc pl-5 my-1.5 space-y-0.5">${items}</ul>`;
+  });
+
+  // Wrap ordered list items
+  html = html.replace(/((?:<li data-type="ol">[\s\S]*?<\/li>\n?)+)/g, (match) => {
+    const items = match.replace(/<li data-type="ol">/g, '<li>');
+    return `<ol class="list-decimal pl-5 my-1.5 space-y-0.5">${items}</ol>`;
+  });
+
+  return html;
+}
+
+/**
  * Process AI response: render math first, then clean markdown
  * This avoids the placeholder corruption bugs
  */
@@ -50,7 +69,6 @@ export function processAIResponse(text: string): string {
 
   // Inline math $...$ (single dollar, not inside katex output)
   html = html.replace(/\$([^\$\n]+)\$/g, (_, math) => {
-    // Skip if it looks like it's already inside rendered katex
     if (math.includes('class="katex"')) return `$${math}$`;
     return renderKatex(math, false);
   });
@@ -73,20 +91,29 @@ export function processAIResponse(text: string): string {
   // Inline code
   html = html.replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-sm font-mono">$1</code>');
 
-  // Unordered lists
-  html = html.replace(/^[\t ]*[-*+]\s+(.+)$/gm, '<li>$1</li>');
-  // Wrap consecutive <li> in <ul>
-  html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul class="list-disc pl-5 my-2 space-y-1">$1</ul>');
+  // Clean backslash escapes (e.g. \< \> \[ \] used in text)
+  html = html.replace(/\\([<>[\]{}()|#*_`~\\])/g, '$1');
 
-  // Ordered lists
-  html = html.replace(/^\s*\d+\.\s+(.+)$/gm, '<li>$1</li>');
+  // ---- STEP 3: List processing ----
 
-  // Paragraphs: double newlines
-  html = html.replace(/\n\n+/g, '</p><p>');
-  // Single newlines (but not inside katex)
+  // Unordered lists — mark with data-type for wrapping
+  html = html.replace(/^[\t ]*[-*+]\s+(.+)$/gm, '<li data-type="ul">$1</li>');
+
+  // Ordered lists — mark with data-type for wrapping
+  html = html.replace(/^\s*\d+\.\s+(.+)$/gm, '<li data-type="ol">$1</li>');
+
+  // Wrap consecutive list items in their respective list tags
+  html = wrapLists(html);
+
+  // ---- STEP 4: Paragraphs and line breaks ----
+
+  // Double newlines → paragraph breaks
+  html = html.replace(/\n\n+/g, '</p><p class="mt-2">');
+
+  // Single newlines → line breaks
   html = html.replace(/\n/g, '<br/>');
 
-  // Wrap in paragraph
+  // Wrap in paragraph if not already a block element
   if (!html.startsWith('<')) {
     html = `<p>${html}</p>`;
   }

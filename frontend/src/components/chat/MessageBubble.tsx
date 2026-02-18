@@ -54,16 +54,21 @@ export default function MessageBubble({ message }: { message: Message }) {
             isUser
               ? '[&_*]:text-white [&_code]:bg-violet-500/40 [&_code]:text-white'
               : 'text-slate-800 dark:text-slate-100 [&_strong]:font-semibold [&_code]:bg-slate-100 [&_code]:dark:bg-slate-700',
-            // Lists
-            '[&_ul]:my-1.5 [&_ul]:list-disc [&_ul]:pl-5',
-            '[&_ol]:my-1.5 [&_ol]:list-decimal [&_ol]:pl-5',
-            '[&_li]:my-0.5',
+            // Paragraphs
             '[&_p]:my-1.5 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0',
+            // Lists — tight, consistent indentation
+            '[&_ul]:my-1.5 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-0.5',
+            '[&_ol]:my-1.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:space-y-0.5',
+            '[&_li]:leading-relaxed [&_li]:pl-0.5',
+            // Nested lists
+            '[&_ul_ul]:mt-0.5 [&_ul_ul]:mb-0 [&_ol_ol]:mt-0.5 [&_ol_ol]:mb-0',
             // Math
             '[&_.katex]:text-current',
-            '[&_.katex-display]:my-2 [&_.katex-display]:overflow-x-auto',
+            '[&_.katex-display]:my-3 [&_.katex-display]:overflow-x-auto [&_.katex-display]:text-center',
             // HR
-            '[&_hr]:my-2'
+            '[&_hr]:my-2',
+            // Strong headings
+            '[&_strong.block]:mt-2 [&_strong.block:first-child]:mt-0'
           )}
         />
       </div>

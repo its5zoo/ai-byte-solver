@@ -4,6 +4,7 @@
 @import "katex/dist/katex.min.css";
 
 @layer base {
+
   /* ========================================
      COLOR SYSTEM - Light & Dark Modes
      ======================================== */
@@ -14,24 +15,24 @@
     --background-tertiary: 220 10% 94%;
     --surface: 0 0% 100%;
     --surface-elevated: 0 0% 100%;
-    
+
     /* Foregrounds */
     --foreground: 224 35% 11%;
     --foreground-secondary: 220 9% 46%;
     --foreground-tertiary: 220 9% 60%;
-    
+
     /* Primary Brand Colors */
     --primary: 262 83% 58%;
     --primary-hover: 262 83% 52%;
     --primary-foreground: 0 0% 100%;
     --primary-light: 262 70% 95%;
     --primary-dark: 262 83% 40%;
-    
+
     /* Accent Colors */
     --accent: 210 100% 56%;
     --accent-hover: 210 100% 50%;
     --accent-foreground: 0 0% 100%;
-    
+
     /* Semantic Colors */
     --success: 142 71% 45%;
     --success-light: 142 76% 95%;
@@ -41,14 +42,14 @@
     --error-light: 0 84% 95%;
     --info: 199 89% 48%;
     --info-light: 199 89% 95%;
-    
+
     /* Muted & Borders */
     --muted: 220 14% 96%;
     --muted-foreground: 220 9% 46%;
     --border: 220 13% 91%;
     --border-hover: 220 13% 85%;
     --ring: 262 83% 58%;
-    
+
     /* Shadows */
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
@@ -57,7 +58,7 @@
     --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
     --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
     --shadow-primary: 0 10px 25px -5px rgb(124 58 237 / 0.3), 0 8px 10px -6px rgb(124 58 237 / 0.2);
-    
+
     /* Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(262 83% 58%) 0%, hsl(252 83% 65%) 100%);
     --gradient-accent: linear-gradient(135deg, hsl(210 100% 56%) 0%, hsl(199 89% 48%) 100%);
@@ -71,24 +72,24 @@
     --background-tertiary: 224 25% 14%;
     --surface: 224 30% 12%;
     --surface-elevated: 224 25% 16%;
-    
+
     /* Foregrounds */
     --foreground: 210 20% 98%;
     --foreground-secondary: 215 16% 65%;
     --foreground-tertiary: 215 16% 50%;
-    
+
     /* Primary Brand Colors */
     --primary: 263 70% 58%;
     --primary-hover: 263 70% 65%;
     --primary-foreground: 0 0% 100%;
     --primary-light: 263 70% 20%;
     --primary-dark: 263 70% 75%;
-    
+
     /* Accent Colors */
     --accent: 210 90% 55%;
     --accent-hover: 210 90% 60%;
     --accent-foreground: 0 0% 100%;
-    
+
     /* Semantic Colors */
     --success: 142 71% 50%;
     --success-light: 142 71% 15%;
@@ -98,14 +99,14 @@
     --error-light: 0 84% 15%;
     --info: 199 89% 55%;
     --info-light: 199 89% 15%;
-    
+
     /* Muted & Borders */
     --muted: 224 25% 14%;
     --muted-foreground: 215 16% 65%;
     --border: 224 20% 18%;
     --border-hover: 224 20% 24%;
     --ring: 263 70% 58%;
-    
+
     /* Shadows */
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
     --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
@@ -114,7 +115,7 @@
     --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.4);
     --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.5);
     --shadow-primary: 0 10px 25px -5px rgb(124 58 237 / 0.4), 0 8px 10px -6px rgb(124 58 237 / 0.3);
-    
+
     /* Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(263 70% 58%) 0%, hsl(253 70% 65%) 100%);
     --gradient-accent: linear-gradient(135deg, hsl(210 90% 55%) 0%, hsl(199 89% 55%) 100%);
@@ -139,27 +140,32 @@ body {
 }
 
 /* Typography hierarchy */
-h1, .text-heading-1 {
+h1,
+.text-heading-1 {
   @apply text-4xl font-bold tracking-tight text-slate-900 dark:text-white;
   line-height: 1.2;
 }
 
-h2, .text-heading-2 {
+h2,
+.text-heading-2 {
   @apply text-3xl font-bold tracking-tight text-slate-900 dark:text-white;
   line-height: 1.3;
 }
 
-h3, .text-heading-3 {
+h3,
+.text-heading-3 {
   @apply text-2xl font-semibold text-slate-900 dark:text-white;
   line-height: 1.4;
 }
 
-h4, .text-heading-4 {
+h4,
+.text-heading-4 {
   @apply text-xl font-semibold text-slate-900 dark:text-white;
   line-height: 1.4;
 }
 
-h5, .text-heading-5 {
+h5,
+.text-heading-5 {
   @apply text-lg font-semibold text-slate-900 dark:text-white;
   line-height: 1.5;
 }
@@ -190,8 +196,8 @@ h5, .text-heading-5 {
 /* Smooth theme transitions */
 .theme-transition {
   transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Fade animations */
@@ -199,6 +205,7 @@ h5, .text-heading-5 {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -208,6 +215,7 @@ h5, .text-heading-5 {
   from {
     opacity: 1;
   }
+
   to {
     opacity: 0;
   }
@@ -218,6 +226,7 @@ h5, .text-heading-5 {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -229,6 +238,7 @@ h5, .text-heading-5 {
     opacity: 0;
     transform: translateY(-20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -241,6 +251,7 @@ h5, .text-heading-5 {
     opacity: 0;
     transform: scale(0.9);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -252,6 +263,7 @@ h5, .text-heading-5 {
     opacity: 1;
     transform: scale(1);
   }
+
   to {
     opacity: 0;
     transform: scale(0.9);
@@ -264,6 +276,7 @@ h5, .text-heading-5 {
     opacity: 0;
     transform: translateX(100%);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -275,6 +288,7 @@ h5, .text-heading-5 {
     opacity: 0;
     transform: translateX(-100%);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -283,9 +297,12 @@ h5, .text-heading-5 {
 
 /* Pulse animation */
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.5;
   }
@@ -293,9 +310,12 @@ h5, .text-heading-5 {
 
 /* Bounce animation */
 @keyframes bounce {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-10px);
   }
@@ -303,13 +323,24 @@ h5, .text-heading-5 {
 
 /* Shake animation */
 @keyframes shake {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateX(0);
   }
-  10%, 30%, 50%, 70%, 90% {
+
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
     transform: translateX(-10px);
   }
-  20%, 40%, 60%, 80% {
+
+  20%,
+  40%,
+  60%,
+  80% {
     transform: translateX(10px);
   }
 }
@@ -319,6 +350,7 @@ h5, .text-heading-5 {
   0% {
     background-position: -1000px 0;
   }
+
   100% {
     background-position: 1000px 0;
   }
@@ -439,15 +471,17 @@ h5, .text-heading-5 {
   margin-bottom: 0;
 }
 
-.prose ul, .prose ol {
-  margin-top: 0.75em;
-  margin-bottom: 0.75em;
+.prose ul,
+.prose ol {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
   padding-left: 1.5em;
 }
 
 .prose li {
-  margin-top: 0.25em;
-  margin-bottom: 0.25em;
+  margin-top: 0.15em;
+  margin-bottom: 0.15em;
+  line-height: 1.6;
 }
 
 .prose code {
@@ -481,22 +515,27 @@ h5, .text-heading-5 {
 }
 
 .katex-display {
-  margin: 1em 0;
+  margin: 0.75em 0;
   overflow-x: auto;
   overflow-y: hidden;
+  text-align: center;
 }
 
 /* Responsive helpers */
 @media (max-width: 768px) {
-  h1, .text-heading-1 {
+
+  h1,
+  .text-heading-1 {
     @apply text-3xl;
   }
-  
-  h2, .text-heading-2 {
+
+  h2,
+  .text-heading-2 {
     @apply text-2xl;
   }
-  
-  h3, .text-heading-3 {
+
+  h3,
+  .text-heading-3 {
     @apply text-xl;
   }
 }
@@ -512,12 +551,10 @@ h5, .text-heading-5 {
 
 /* Loading skeleton */
 .skeleton {
-  background: linear-gradient(
-    90deg,
-    hsl(var(--muted)) 0%,
-    hsl(var(--background-secondary)) 50%,
-    hsl(var(--muted)) 100%
-  );
+  background: linear-gradient(90deg,
+      hsl(var(--muted)) 0%,
+      hsl(var(--background-secondary)) 50%,
+      hsl(var(--muted)) 100%);
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
   border-radius: 0.5rem;
