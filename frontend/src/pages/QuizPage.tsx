@@ -36,7 +36,8 @@ function normalizeMathMarkdown(input: string): string {
     // Even-indexed parts are outside math delimiters
     if (i % 2 === 0) {
       // Wrap bare LaTeX sequences in $...$
-      return part.replace(BARE_LATEX_RE, '$$$1$$$');
+      // Use callback to ensure correct replacement without special character issues
+      return part.replace(BARE_LATEX_RE, (match, group1) => `$${group1}$`);
     }
     return part;
   }).join('');
@@ -47,7 +48,16 @@ function normalizeMathMarkdown(input: string): string {
 function QuizText({ text, className }: { text: string; className?: string }) {
   const md = useMemo(() => normalizeMathMarkdown(text), [text]);
   return (
-    <div className={cn('prose prose-sm max-w-none break-words dark:prose-invert', className)}>
+    <div className={cn(
+      'prose prose-sm max-w-none break-words dark:prose-invert',
+      // Fix for "red text" readability: Override code styles
+      'prose-code:text-violet-600 dark:prose-code:text-violet-300',
+      'prose-code:bg-violet-50 dark:prose-code:bg-violet-900/30',
+      'prose-code:px-1 prose-code:py-0.5 prose-code:rounded',
+      'prose-code:before:content-none prose-code:after:content-none', // Remove backticks
+      'prose-p:leading-normal',
+      className
+    )}>
       <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeKatex]}>
         {md}
       </ReactMarkdown>
