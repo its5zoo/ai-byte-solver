@@ -92,7 +92,7 @@ export default function ChatPanel({
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
       {/* Messages area */}
       <div className="min-h-0 flex-1 overflow-y-auto custom-scrollbar">
-        <div className="mx-auto w-full max-w-3xl px-4 py-6">
+        <div className="mx-auto w-full px-6 py-6 lg:px-12">
           {/* Error banner */}
           {error && (
             <div className="mb-6 animate-fade-in-down flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">

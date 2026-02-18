@@ -34,6 +34,7 @@ export default function Dashboard() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
   const [pdfs, setPdfs] = useState<PDF[]>([]);
+  const [pendingPdfId, setPendingPdfId] = useState<string | null>(null);
   const [summary, setSummary] = useState<Record<string, unknown> | null>(null);
   const [streak, setStreak] = useState<Record<string, unknown> | null>(null);
   const [timeline, setTimeline] = useState<{ date: string; doubtsSolved: number; studyTimeMinutes: number }[]>([]);
@@ -102,15 +103,17 @@ export default function Dashboard() {
     setMessages([]);
   };
 
-  const handleSend = async (content: string) => {
+  const handleSend = async (content: string, pdfId?: string) => {
     let activeSessionId = sessionId;
     if (!activeSessionId) {
       setIsLoading(true);
       setChatError(null);
       try {
+        const selectedPdfId = pdfId || pendingPdfId || null;
         const { data } = await api.post('/chat/sessions', {
           title: 'New Chat',
           mode: defaultMode,
+          pdfId: selectedPdfId,
         });
         const newId = data?.session?._id;
         if (!newId) throw new Error('No session ID returned');
@@ -122,6 +125,7 @@ export default function Dashboard() {
         setMessages([userMsgRes, aiMsgRes]);
         justCreatedSessionIdRef.current = newId;
         navigate(`/chat/${newId}`);
+        setPendingPdfId(null);
         setChatError(null);
         fetchStats();
       } catch (err: unknown) {
@@ -189,7 +193,10 @@ export default function Dashboard() {
   };
 
   const handleAttachPdf = async (pdfId: string) => {
-    if (!sessionId) return;
+    if (!sessionId) {
+      setPendingPdfId(pdfId);
+      return;
+    }
     try {
       const { data } = await api.patch(`/chat/sessions/${sessionId}`, { pdfId });
       setCurrentSession(data.session);
@@ -199,7 +206,10 @@ export default function Dashboard() {
   };
 
   const handleDetachPdf = async () => {
-    if (!sessionId) return;
+    if (!sessionId) {
+      setPendingPdfId(null);
+      return;
+    }
     try {
       const { data } = await api.patch(`/chat/sessions/${sessionId}`, { pdfId: null });
       setCurrentSession(data.session);
@@ -228,14 +238,16 @@ export default function Dashboard() {
   const attachedPdfName = currentSession?.pdfId && typeof currentSession.pdfId === 'object'
     ? (currentSession.pdfId as { originalName: string }).originalName
     : null;
+  const effectivePdfId = attachedPdfId ?? pendingPdfId;
+  const effectivePdfName = attachedPdfName ?? (effectivePdfId ? (pdfs.find((p) => p._id === effectivePdfId)?.originalName ?? null) : null);
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
       <LeftSidebar
         sessions={sessions}
         pdfs={pdfs}
-        attachedPdfId={attachedPdfId}
-        attachedPdfName={attachedPdfName}
+        attachedPdfId={effectivePdfId}
+        attachedPdfName={effectivePdfName}
         onNewChat={handleNewChat}
         onUploadClick={() => setIsUploadOpen((v) => !v)}
         onDeleteSession={handleDeleteSession}
@@ -257,7 +269,7 @@ export default function Dashboard() {
           onDismissError={() => setChatError(null)}
           mode={currentSession?.mode || 'syllabus'}
           pdfs={pdfs}
-          attachedPdfId={attachedPdfId}
+          attachedPdfId={effectivePdfId}
           onClearPdf={handleDetachPdf}
         />
       </main>

@@ -41,8 +41,8 @@ export default function MessageBubble({ message }: { message: Message }) {
         className={cn(
           'group relative rounded-2xl px-4 py-3 shadow-sm transition-all',
           isUser
-            ? 'max-w-[75%] bg-violet-600 text-white'
-            : 'max-w-[90%] bg-white border border-slate-200 dark:bg-slate-800 dark:border-slate-700'
+            ? 'max-w-[85%] bg-violet-600 text-white'
+            : 'max-w-[95%] bg-white border border-slate-200 dark:bg-slate-800 dark:border-slate-700'
         )}
       >
         <div

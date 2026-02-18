@@ -14,6 +14,10 @@ const quizQuestionSchema = new mongoose.Schema(
     options: [String],
     correctOption: Number,
     correctAnswer: String,
+    explanation: {
+      type: String,
+      default: '',
+    },
     topic: String,
     difficulty: {
       type: String,

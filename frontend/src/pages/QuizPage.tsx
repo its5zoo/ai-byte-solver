@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { HelpCircle, Trophy, ChevronLeft, MessageSquare, CheckCircle2, XCircle } from 'lucide-react';
 import Button from '../components/ui/Button';
@@ -6,6 +6,34 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import Badge from '../components/ui/Badge';
 import api from '../lib/api';
 import { cn } from '../lib/utils';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import remarkBreaks from 'remark-breaks';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
+
+function normalizeMathMarkdown(input: string) {
+  // Some model outputs contain doubled escaping like \\( ... \\).
+  const s = (input || '').replace(/\\\\/g, '\\');
+  // Convert \( \) / \[ \] into $ / $$ for remark-math.
+  return s
+    .replace(/\\\[/g, '$$')
+    .replace(/\\\]/g, '$$')
+    .replace(/\\\(/g, '$')
+    .replace(/\\\)/g, '$');
+}
+
+function QuizText({ text, className }: { text: string; className?: string }) {
+  const md = useMemo(() => normalizeMathMarkdown(text), [text]);
+  return (
+    <div className={cn('prose prose-sm max-w-none break-words dark:prose-invert', className)}>
+      <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]} rehypePlugins={[rehypeKatex]}>
+        {md}
+      </ReactMarkdown>
+    </div>
+  );
+}
 
 interface QuizQuestion {
   id: string;
@@ -23,12 +51,6 @@ interface Quiz {
   questions: QuizQuestion[];
 }
 
-interface QuizAttempt {
-  questionId: string;
-  selectedOption: number;
-  isCorrect?: boolean;
-}
-
 export default function QuizPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const [step, setStep] = useState<'generate' | 'quiz' | 'result'>('generate');
@@ -36,7 +58,20 @@ export default function QuizPage() {
   const [error, setError] = useState('');
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [answers, setAnswers] = useState<Record<string, number>>({});
-  const [result, setResult] = useState<{ score: number; total: number; percentage: number; attempts: QuizAttempt[] } | null>(null);
+  const [result, setResult] = useState<{
+    score: number;
+    total: number;
+    percentage: number;
+    details: Array<{
+      questionId: string;
+      question: string;
+      options: string[];
+      selectedOption: number | null;
+      correctOption: number | null;
+      isCorrect: boolean;
+      explanation?: string;
+    }>;
+  } | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
 
   const handleGenerate = async () => {
@@ -47,7 +82,7 @@ export default function QuizPage() {
       const { data } = await api.post('/quiz/generate', {
         sessionId,
         count: 5,
-        difficulty: 'mixed',
+        difficulty: 'easy',
       });
       const quizId = data.quiz?.id ?? data.quiz?._id;
       if (!quizId) throw new Error('No quiz ID returned');
@@ -88,13 +123,7 @@ export default function QuizPage() {
       }));
 
       const { data } = await api.post(`/quiz/${quiz._id}/attempt`, { answers: answersPayload });
-      setResult({
-        ...data.result,
-        attempts: answersPayload.map((a, idx) => ({
-          ...a,
-          isCorrect: quiz.questions[idx].correctOption === a.selectedOption,
-        }))
-      });
+      setResult(data.result);
       setStep('result');
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
@@ -213,7 +242,7 @@ export default function QuizPage() {
               <CardHeader>
                 <div className="flex items-start justify-between gap-4">
                   <CardTitle className="text-lg font-semibold flex-1">
-                    {currentQ.question}
+                    <QuizText text={currentQ.question} />
                   </CardTitle>
                   {currentQ.difficulty && (
                     <Badge
@@ -257,7 +286,7 @@ export default function QuizPage() {
                             ? 'text-violet-900 dark:text-violet-100'
                             : 'text-slate-800 dark:text-slate-200'
                         )}>
-                          {opt}
+                          <QuizText text={opt} className="prose-p:my-0" />
                         </span>
                       </button>
                     );
@@ -309,8 +338,8 @@ export default function QuizPage() {
                 <div className="flex flex-col items-center text-center">
                   <div className="mb-6 flex h-32 w-32 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-violet-700 shadow-2xl shadow-violet-500/40">
                     <div className="text-center">
-                      <div className="text-4xl font-bold text-white">{result.percentage}%</div>
-                      <div className="text-sm text-violet-100">Score</div>
+                      <div className="text-4xl font-bold text-white leading-none">{result.percentage}%</div>
+                      <div className="mt-1 text-sm font-semibold text-violet-100">Score</div>
                     </div>
                   </div>
                   <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
@@ -359,13 +388,16 @@ export default function QuizPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {quiz.questions.map((q, idx) => {
-                    const userAnswer = answers[q.id];
-                    const isCorrect = q.correctOption === userAnswer;
+                  {(result.details || []).map((d, idx) => {
+                    const userAnswer = d.selectedOption;
+                    const correctAnswer = d.correctOption;
+                    const isCorrect = !!d.isCorrect;
+                    const yourText = userAnswer !== null && userAnswer !== undefined ? d.options?.[userAnswer] : null;
+                    const correctText = correctAnswer !== null && correctAnswer !== undefined ? d.options?.[correctAnswer] : null;
 
                     return (
                       <div
-                        key={q.id}
+                        key={d.questionId}
                         className={cn(
                           'rounded-xl border-2 p-5 transition-all',
                           isCorrect
@@ -386,16 +418,23 @@ export default function QuizPage() {
                           </div>
                           <div className="flex-1">
                             <p className="font-semibold text-slate-900 dark:text-white mb-2">
-                              {idx + 1}. {q.question}
+                              {idx + 1}. <QuizText text={d.question} className="prose-p:my-0" />
                             </p>
                             <p className="text-sm text-slate-600 dark:text-slate-400">
-                              Your answer: <strong>{q.options?.[userAnswer] || 'Not answered'}</strong>
+                              Your answer: <strong>{yourText ? yourText : 'Not answered'}</strong>
                             </p>
-                            {!isCorrect && q.correctOption !== undefined && (
-                              <p className="text-sm text-green-700 dark:text-green-400 mt-1">
-                                Correct answer: <strong>{q.options?.[q.correctOption]}</strong>
+                            <p className="text-sm text-green-700 dark:text-green-400 mt-1">
+                              Correct answer: <strong>{correctText ? correctText : '—'}</strong>
+                            </p>
+
+                            <div className="mt-3 rounded-xl border border-slate-200 bg-white/70 px-4 py-3 dark:border-slate-700 dark:bg-slate-900/40">
+                              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                Solution
                               </p>
-                            )}
+                              <div className="mt-1 text-sm text-slate-700 dark:text-slate-200">
+                                <QuizText text={d.explanation || 'Review the concept from the chat solution and try again.'} className="prose-p:my-0" />
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
