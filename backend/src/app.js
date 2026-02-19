@@ -9,6 +9,9 @@ import statsRoutes from './routes/statsRoutes.js';
 import streakRoutes from './routes/streakRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import doubtRoutes from './routes/doubtRoutes.js';
+import ideRoutes from './routes/ideRoutes.js';
+import aiRouterRoutes from './routes/aiRouterRoutes.js';
+
 
 const app = express();
 
@@ -41,6 +44,9 @@ app.use('/api/v1/quiz', quizRoutes);
 app.use('/api/v1/stats', statsRoutes);
 app.use('/api/v1/streaks', streakRoutes);
 app.use('/api/v1/doubts', doubtRoutes);
+app.use('/api/v1/ide', ideRoutes);
+app.use('/api/v1/ai-router', aiRouterRoutes);
+
 
 app.get('/health', (req, res) => res.json({ ok: true }));
 

@@ -100,6 +100,60 @@
     --bg-gradient: radial-gradient(at 0% 0%, hsla(224, 71%, 10%, 1) 0, transparent 50%),
       radial-gradient(at 50% 0%, hsla(224, 71%, 5%, 1) 0, transparent 50%),
       radial-gradient(at 100% 0%, hsla(224, 71%, 10%, 1) 0, transparent 50%);
+    --mesh-color-1: hsla(230, 100%, 20%, 0.15);
+    --mesh-color-2: hsla(260, 100%, 20%, 0.1);
+    --mesh-color-3: hsla(280, 100%, 20%, 0.05);
+  }
+}
+
+@layer utilities {
+  .mesh-gradient-premium {
+    background-color: hsla(224, 71%, 4%, 1);
+    background-image: var(--bg-gradient);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .mesh-gradient-premium::before {
+    content: "";
+    position: absolute;
+    inset: -50%;
+    background:
+      radial-gradient(circle at 20% 30%, var(--mesh-color-1) 0%, transparent 40%),
+      radial-gradient(circle at 80% 70%, var(--mesh-color-2) 0%, transparent 40%),
+      radial-gradient(circle at 50% 50%, var(--mesh-color-3) 0%, transparent 50%);
+    filter: blur(80px);
+    z-index: 0;
+    animation: mesh-drift 20s ease-in-out infinite alternate;
+  }
+
+  @keyframes mesh-drift {
+    0% {
+      transform: rotate(0deg) scale(1) translate(0, 0);
+    }
+
+    100% {
+      transform: rotate(5deg) scale(1.1) translate(2%, 2%);
+    }
+  }
+
+  .glass-premium {
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 12px 40px -10px rgba(0, 0, 0, 0.5);
+  }
+
+  .glass-premium-hover {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .glass-premium-hover:hover {
+    background: rgba(30, 41, 59, 0.65);
+    border-color: rgba(99, 102, 241, 0.4);
+    box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.6), 0 0 20px rgba(99, 102, 241, 0.15);
+    transform: translateY(-4px);
   }
 }
 
@@ -500,20 +554,66 @@ h5,
   color: hsl(var(--foreground));
 }
 
-.prose pre {
-  background-color: hsl(var(--surface-elevated));
-  border: 1px solid hsl(var(--border));
-  border-radius: 0.5rem;
-  padding: 1rem;
-  overflow-x: auto;
-  margin: 1em 0;
+/* Code Block Styles */
+.code-block-container {
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.4);
 }
 
-.prose pre code {
-  background-color: transparent;
-  padding: 0;
-  border-radius: 0;
-  font-size: inherit;
+.code-block {
+  font-family: 'Inter', 'JetBrains Mono', 'Fira Code', monospace;
+  tab-size: 2;
+}
+
+/* Table Styles - Modern & Structured */
+.prose table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 1.5rem 0;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--surface) / 0.3);
+}
+
+.prose th {
+  background: hsl(var(--muted));
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: hsl(var(--foreground-secondary));
+  border-bottom: 2px solid hsl(var(--border));
+}
+
+.prose td {
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.5);
+  color: hsl(var(--foreground));
+  vertical-align: top;
+}
+
+.prose tr:last-child td {
+  border-bottom: none;
+}
+
+.prose tr:hover td {
+  background: hsl(var(--primary) / 0.03);
+}
+
+.dark .prose tr:hover td {
+  background: hsl(var(--primary) / 0.05);
+}
+
+/* Scrollable container for tables on small screens */
+.table-wrapper {
+  overflow-x: auto;
+  margin: 1rem 0;
+  border-radius: 0.75rem;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* KaTeX math rendering improvements */

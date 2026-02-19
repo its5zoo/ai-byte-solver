@@ -13,8 +13,78 @@ import remarkBreaks from 'remark-breaks';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 
-// Bare LaTeX command patterns that should be wrapped in $...$
-const BARE_LATEX_RE = /(?<!\$)(\\(?:dfrac|frac|sqrt|omega|alpha|beta|gamma|delta|theta|lambda|mu|pi|sigma|phi|psi|Omega|Alpha|Beta|Gamma|Delta|Theta|Lambda|Sigma|Phi|Psi|vec|hat|bar|dot|ddot|tilde|mathbf|mathrm|mathit|text|left|right|cdot|times|div|pm|mp|leq|geq|neq|approx|infty|partial|nabla|sum|prod|int|lim|log|ln|sin|cos|tan|sec|csc|cot|arcsin|arccos|arctan)\b(?:\{[^}]*\})*(?:_\{?[^}\s]*\}?)?(?:\^\{?[^}\s]*\}?)?)(?!\$)/g;
+// All LaTeX command names we want to detect as bare math
+const LATEX_COMMANDS = new Set([
+  'dfrac', 'frac', 'sqrt', 'omega', 'alpha', 'beta', 'gamma', 'delta', 'theta', 'lambda',
+  'mu', 'pi', 'sigma', 'phi', 'psi', 'Omega', 'Alpha', 'Beta', 'Gamma', 'Delta', 'Theta',
+  'Lambda', 'Sigma', 'Phi', 'Psi', 'vec', 'hat', 'bar', 'dot', 'ddot', 'tilde', 'mathbf',
+  'mathrm', 'mathit', 'text', 'left', 'right', 'cdot', 'times', 'div', 'pm', 'mp', 'leq',
+  'geq', 'neq', 'approx', 'infty', 'partial', 'nabla', 'sum', 'prod', 'int', 'lim', 'log',
+  'ln', 'sin', 'cos', 'tan', 'sec', 'csc', 'cot', 'arcsin', 'arccos', 'arctan',
+]);
+
+/**
+ * Reads one balanced {…} group starting at `pos` (which must be `{`).
+ * Returns the index AFTER the closing `}`.
+ */
+function readBraceGroup(s: string, pos: number): number {
+  let depth = 0;
+  while (pos < s.length) {
+    if (s[pos] === '{') depth++;
+    else if (s[pos] === '}') { depth--; if (depth === 0) return pos + 1; }
+    pos++;
+  }
+  return pos;
+}
+
+/**
+ * Walk a non-math text segment and wrap every bare LaTeX command
+ * (plus its arguments / sub- / superscripts) inside `$...$`.
+ * Handles nested braces correctly via readBraceGroup.
+ */
+function wrapBareLaTeX(seg: string): string {
+  let out = '';
+  let i = 0;
+  while (i < seg.length) {
+    if (seg[i] === '\\') {
+      // Read the command name
+      let j = i + 1;
+      while (j < seg.length && /[a-zA-Z]/.test(seg[j])) j++;
+      const cmd = seg.slice(i + 1, j);
+      if (LATEX_COMMANDS.has(cmd)) {
+        // Consume optional whitespace after command
+        let k = j;
+        // Greedily consume brace groups and sub/superscripts
+        let changed = true;
+        while (changed && k < seg.length) {
+          changed = false;
+          // Brace group {…}
+          if (seg[k] === '{') {
+            k = readBraceGroup(seg, k);
+            changed = true;
+          }
+          // Subscript _ or superscript ^
+          if (k < seg.length && (seg[k] === '_' || seg[k] === '^')) {
+            k++;
+            if (k < seg.length && seg[k] === '{') {
+              k = readBraceGroup(seg, k);
+            } else {
+              // single token: consume until whitespace or special char
+              while (k < seg.length && !/[\s{$\\]/.test(seg[k])) k++;
+            }
+            changed = true;
+          }
+        }
+        out += '$' + seg.slice(i, k) + '$';
+        i = k;
+        continue;
+      }
+    }
+    out += seg[i];
+    i++;
+  }
+  return out;
+}
 
 function normalizeMathMarkdown(input: string): string {
   if (!input) return '';
@@ -28,19 +98,10 @@ function normalizeMathMarkdown(input: string): string {
   // Convert \( \) inline math → $ $
   s = s.replace(/\\\(/g, '$').replace(/\\\)/g, '$');
 
-  // Wrap bare LaTeX commands (e.g. \omega_0, \dfrac{m}{2}) in $...$
-  // Only if not already inside a $ ... $ block
-  // Strategy: split on existing $...$ regions, only process non-math segments
+  // Wrap bare LaTeX commands only in non-math segments
+  // (split preserves the $...$ delimiters so we skip those)
   const parts = s.split(/(\$\$[\s\S]*?\$\$|\$[^$\n]+\$)/g);
-  s = parts.map((part, i) => {
-    // Even-indexed parts are outside math delimiters
-    if (i % 2 === 0) {
-      // Wrap bare LaTeX sequences in $...$
-      // Use callback to ensure correct replacement without special character issues
-      return part.replace(BARE_LATEX_RE, (_match, group1) => `$${group1}$`);
-    }
-    return part;
-  }).join('');
+  s = parts.map((part, i) => (i % 2 === 0 ? wrapBareLaTeX(part) : part)).join('');
 
   return s;
 }
@@ -192,12 +253,12 @@ export default function QuizPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+    <div className="min-h-screen bg-[hsl(var(--background))]">
       <div className="mx-auto max-w-3xl px-4 py-8">
         {/* Back button */}
         <Link
           to={`/chat/${sessionId}`}
-          className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-violet-600 dark:text-slate-400 dark:hover:text-violet-400 transition-colors"
+          className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-[hsl(var(--foreground-tertiary))] hover:text-[hsl(var(--primary))] transition-colors"
         >
           <ChevronLeft className="h-4 w-4" />
           Back to Chat
@@ -298,23 +359,20 @@ export default function QuizPage() {
                           'w-full flex items-center gap-4 rounded-xl border-2 px-5 py-4 text-left transition-all',
                           'hover:scale-[1.02] active:scale-[0.98]',
                           isSelected
-                            ? 'border-violet-600 bg-violet-50 dark:border-violet-500 dark:bg-violet-950/30 shadow-md shadow-violet-500/20'
-                            : 'border-slate-200 bg-white hover:border-violet-300 hover:bg-violet-50/50 dark:border-slate-600 dark:bg-slate-800 dark:hover:border-violet-600 dark:hover:bg-violet-950/20'
+                            ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary-light))] shadow-md'
+                            : 'border-[hsl(var(--border))] bg-[hsl(var(--surface-elevated))] hover:border-[hsl(var(--primary))] hover:bg-[hsl(var(--primary-light))]'
                         )}
                       >
                         <div className={cn(
                           'flex h-6 w-6 items-center justify-center rounded-full border-2 shrink-0',
                           isSelected
-                            ? 'border-violet-600 bg-violet-600 dark:border-violet-500 dark:bg-violet-500'
-                            : 'border-slate-300 dark:border-slate-600'
+                            ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary))]'
+                            : 'border-[hsl(var(--border-hover))]'
                         )}>
                           {isSelected && <div className="h-2 w-2 rounded-full bg-white" />}
                         </div>
                         <span className={cn(
-                          'font-medium',
-                          isSelected
-                            ? 'text-violet-900 dark:text-violet-100'
-                            : 'text-slate-800 dark:text-slate-200'
+                          'font-medium text-[hsl(var(--foreground))]'
                         )}>
                           <QuizText text={opt} className="prose-p:my-0" />
                         </span>

@@ -37,6 +37,7 @@ const userSchema = new mongoose.Schema(
     preferences: {
       theme: { type: String, enum: ['light', 'dark', 'system'], default: 'system' },
       language: { type: String, default: 'en' },
+      defaultStartupMode: { type: String, enum: ['dashboard', 'study', 'ide'], default: 'dashboard' },
     },
   },
   { timestamps: true }

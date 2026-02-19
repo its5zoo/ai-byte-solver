@@ -7,6 +7,10 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import QuizPage from './pages/QuizPage';
+import IDEPage from './pages/IDEPage';
+import IDEHistory from './pages/IDEHistory';
+
+
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token);
@@ -70,7 +74,33 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/ide"
+          element={
+            <ProtectedRoute>
+              <IDEPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/ide/:projectId"
+          element={
+            <ProtectedRoute>
+              <IDEPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/ide/history"
+          element={
+            <ProtectedRoute>
+              <IDEHistory />
+            </ProtectedRoute>
+          }
+        />
         <Route path="*" element={<Navigate to="/" replace />} />
+
       </Routes>
     </BrowserRouter>
   );

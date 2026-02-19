@@ -1,0 +1,173 @@
+import { useRef, useEffect, useCallback } from 'react';
+import Editor, { useMonaco } from '@monaco-editor/react';
+import type { editor } from 'monaco-editor';
+
+interface CodeEditorProps {
+    fileId: string;
+    language: string;
+    content: string;
+    onChange: (content: string) => void;
+    onSave: (content: string) => void;
+}
+
+const LANGUAGE_MAP: Record<string, string> = {
+    javascript: 'javascript',
+    typescript: 'typescript',
+    python: 'python',
+    cpp: 'cpp',
+    c: 'c',
+    csharp: 'csharp',
+    java: 'java',
+    html: 'html',
+    css: 'css',
+    scss: 'scss',
+    json: 'json',
+    markdown: 'markdown',
+    shell: 'shell',
+    bash: 'shell',
+    yaml: 'yaml',
+    xml: 'xml',
+    sql: 'sql',
+    rust: 'rust',
+    go: 'go',
+    ruby: 'ruby',
+    php: 'php',
+    swift: 'swift',
+    kotlin: 'kotlin',
+    text: 'plaintext',
+    other: 'plaintext',
+};
+
+export default function CodeEditor({ fileId, language, content, onChange, onSave }: CodeEditorProps) {
+    const monaco = useMonaco();
+    const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+
+    // Define custom dark theme once Monaco is ready
+    useEffect(() => {
+        if (!monaco) return;
+
+        monaco.editor.defineTheme('ide-dark', {
+            base: 'vs-dark',
+            inherit: true,
+            rules: [
+                { token: 'keyword', foreground: 'c084fc', fontStyle: 'bold' },
+                { token: 'variable', foreground: '7dd3fc' },
+                { token: 'string', foreground: '4ade80' },
+                { token: 'string.escape', foreground: '4ade80' },
+                { token: 'number', foreground: 'fb923c' },
+                { token: 'comment', foreground: '6b7280', fontStyle: 'italic' },
+                { token: 'function', foreground: 'facc15' },
+                { token: 'type', foreground: '38bdf8' },
+                { token: 'identifier', foreground: '7dd3fc' },
+                { token: 'operator', foreground: 'e2e8f0' },
+                { token: 'delimiter', foreground: 'e2e8f0' },
+                { token: 'tag', foreground: 'f87171' },
+                { token: 'attribute.name', foreground: 'c084fc' },
+                { token: 'attribute.value', foreground: '4ade80' },
+            ],
+            colors: {
+                'editor.background': '#0f172a',
+                'editor.foreground': '#e2e8f0',
+                'editor.lineHighlightBackground': '#1e293b',
+                'editor.selectionBackground': '#6366f130',
+                'editor.selectionHighlightBackground': '#6366f118',
+                'editorLineNumber.foreground': '#334155',
+                'editorLineNumber.activeForeground': '#6366f1',
+                'editorCursor.foreground': '#6366f1',
+                'editorGutter.background': '#0f172a',
+                'editorWidget.background': '#1e293b',
+                'editorSuggestWidget.background': '#1e293b',
+                'editorSuggestWidget.border': '#334155',
+                'editorSuggestWidget.selectedBackground': '#6366f120',
+                'scrollbar.shadow': '#0f172a',
+                'scrollbarSlider.background': '#33415560',
+                'scrollbarSlider.hoverBackground': '#475569',
+                'minimap.background': '#0f172a',
+                'input.background': '#1e293b',
+                'input.border': '#334155',
+                'focusBorder': '#6366f1',
+            },
+        });
+
+        monaco.editor.setTheme('ide-dark');
+    }, [monaco]);
+
+    const handleMount = useCallback((editorInstance: editor.IStandaloneCodeEditor, monacoInstance: any) => {
+        editorRef.current = editorInstance;
+
+        // Ctrl+S / Cmd+S to save
+        editorInstance.addCommand(
+            monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.KeyS,
+            () => {
+                const value = editorInstance.getValue();
+                onSave(value);
+            }
+        );
+
+        // Ctrl+K inline AI (placeholder - opens AI panel)
+        editorInstance.addCommand(
+            monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.KeyK,
+            () => {
+                // Dispatch custom event that AIAssistantPanel listens to
+                window.dispatchEvent(new CustomEvent('ide:ai-inline', {
+                    detail: { selection: editorInstance.getModel()?.getValueInRange(editorInstance.getSelection()!) }
+                }));
+            }
+        );
+
+        // Format on button click
+        const formatAction = editorInstance.getAction('editor.action.formatDocument');
+        if (formatAction) {
+            (window as any).__ideFormat = () => editorInstance.trigger('keyboard', 'editor.action.formatDocument', null);
+        }
+    }, [monaco, onSave]);
+
+    return (
+        <div className="h-full w-full overflow-hidden">
+            <Editor
+                key={fileId}
+                height="100%"
+                language={LANGUAGE_MAP[language] || 'plaintext'}
+                value={content}
+                theme="ide-dark"
+                onChange={(val) => onChange(val || '')}
+                onMount={handleMount}
+                options={{
+                    fontSize: 14,
+                    fontFamily: '"JetBrains Mono", "Fira Code", "Cascadia Code", Consolas, monospace',
+                    fontLigatures: true,
+                    lineNumbers: 'on',
+                    minimap: { enabled: true, scale: 1 },
+                    scrollBeyondLastLine: false,
+                    automaticLayout: true,
+                    tabSize: 2,
+                    insertSpaces: true,
+                    autoClosingBrackets: 'always',
+                    autoClosingQuotes: 'always',
+                    autoIndent: 'full',
+                    formatOnPaste: true,
+                    suggestOnTriggerCharacters: true,
+                    quickSuggestions: { other: true, comments: false, strings: true },
+                    parameterHints: { enabled: true },
+                    wordWrap: 'off',
+                    smoothScrolling: true,
+                    cursorBlinking: 'phase',
+                    cursorSmoothCaretAnimation: 'on',
+                    renderWhitespace: 'selection',
+                    bracketPairColorization: { enabled: true },
+                    guides: { bracketPairs: true, indentation: true },
+                    padding: { top: 12, bottom: 12 },
+                    scrollbar: {
+                        verticalScrollbarSize: 8,
+                        horizontalScrollbarSize: 8,
+                    },
+                }}
+                loading={
+                    <div className="flex h-full items-center justify-center bg-[#0f172a]">
+                        <div className="text-sm text-slate-500 animate-pulse">Loading editor…</div>
+                    </div>
+                }
+            />
+        </div>
+    );
+}

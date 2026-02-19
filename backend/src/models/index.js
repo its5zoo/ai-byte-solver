@@ -6,3 +6,5 @@ export { default as Quiz } from './Quiz.js';
 export { default as QuizAttempt } from './QuizAttempt.js';
 export { default as LearningStatistics } from './LearningStatistics.js';
 export { default as StudyStreak } from './StudyStreak.js';
+export { default as IdeProject } from './IdeProject.js';
+export { default as IdeFile } from './IdeFile.js';

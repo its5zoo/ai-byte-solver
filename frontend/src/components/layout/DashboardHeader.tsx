@@ -1,5 +1,6 @@
-import { Link } from 'react-router-dom';
-import { LogOut, Moon, Sun } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { LogOut, Moon, Sun, Code2 } from 'lucide-react';
+
 import { useThemeStore } from '../../stores/themeStore';
 import { useAuthStore } from '../../stores/authStore';
 import { cn } from '../../lib/utils';
@@ -15,7 +16,9 @@ interface DashboardHeaderProps {
 export default function DashboardHeader({ mode, onModeChange }: DashboardHeaderProps) {
   const { theme, setTheme } = useThemeStore();
   const { user } = useAuthStore();
+  const navigate = useNavigate();
   const isDark = theme === 'dark' || (theme === 'system' && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
 
   const toggleTheme = () => {
     setTheme(isDark ? 'light' : 'dark');
@@ -59,7 +62,17 @@ export default function DashboardHeader({ mode, onModeChange }: DashboardHeaderP
           >
             Open Mode
           </button>
+          {/* IDE Mode */}
+          <button
+            type="button"
+            onClick={() => navigate('/ide')}
+            className="flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-bold transition-all duration-300 text-[hsl(var(--foreground-secondary))] hover:bg-[hsl(var(--muted))] hover:text-indigo-500"
+          >
+            <Code2 className="h-4 w-4" />
+            IDE Mode
+          </button>
         </div>
+
       </div>
 
       <div className="flex items-center gap-3">

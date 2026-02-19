@@ -25,32 +25,15 @@ export const getSummary = async (userId) => {
   const topics = new Set();
   stats.forEach((s) => (s.topicsCovered || []).forEach((t) => topics.add(t)));
 
-  // Calculate accuracy using negative marking: +1 correct, -0.5 wrong
-  // Uses QuizAttempt records which store per-quiz score and total
+  // Simple accuracy: total correct / total questions across all attempts × 100
   const attempts = await QuizAttempt.find({ userId }).lean();
 
   let accuracyPercent = 0;
   if (attempts.length > 0) {
-    let totalNetScore = 0;
-    let totalMaxScore = 0;
-
-    for (const attempt of attempts) {
-      const total = attempt.total || 0;
-      const correct = attempt.score || 0;
-      const wrong = total - correct;
-
-      // +1 per correct, -0.5 per wrong
-      const netScore = correct * 1 + wrong * (-0.5);
-      const maxScore = total * 1; // max possible if all correct
-
-      totalNetScore += netScore;
-      totalMaxScore += maxScore;
-    }
-
-    if (totalMaxScore > 0) {
-      const raw = (totalNetScore / totalMaxScore) * 100;
-      // Clamp between 0 and 100
-      accuracyPercent = Math.min(100, Math.max(0, Math.round(raw)));
+    const totalCorrect = attempts.reduce((s, a) => s + (a.score || 0), 0);
+    const totalQuestions = attempts.reduce((s, a) => s + (a.total || 0), 0);
+    if (totalQuestions > 0) {
+      accuracyPercent = Math.round((totalCorrect / totalQuestions) * 100);
     }
   }
 

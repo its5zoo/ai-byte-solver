@@ -7,7 +7,7 @@ import Quiz from '../models/Quiz.js';
 import { AppError } from '../middleware/errorHandler.js';
 
 const OLLAMA_BASE = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'gpt-oss:120b-cloud';
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'deepseek-v3.1:671b-cloud';
 
 const callOllama = async (prompt) => {
   const url = `${OLLAMA_BASE}/api/chat`;
@@ -212,12 +212,9 @@ export const evaluateAttempt = async (quizId, userId, answers) => {
   }
 
   const total = quiz.questions?.length || 1;
-  const wrong = total - correct;
 
-  // Negative marking: +1 correct, -0.5 wrong
-  const netScore = correct * 1 + wrong * (-0.5);
-  const maxScore = total * 1;
-  const percentage = Math.min(100, Math.max(0, Math.round((netScore / maxScore) * 100)));
+  // Simple accuracy: correct / total × 100
+  const percentage = Math.round((correct / total) * 100);
 
   return { score: correct, total, percentage, details };
 };
