@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Brain, User, Mail, Lock, Eye, EyeOff, Check } from 'lucide-react';
+import { User, Mail, Lock, Eye, EyeOff, Check } from 'lucide-react';
+import { AILogo } from '../components/ui/AILogo';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import api from '../lib/api';
@@ -55,8 +56,8 @@ export default function Register() {
       <div className="relative w-full max-w-md animate-fade-in-up">
         {/* Header */}
         <div className="mb-8 flex flex-col items-center gap-4 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-600 shadow-xl shadow-violet-500/20 ring-4 ring-white dark:ring-slate-800">
-            <Brain className="h-8 w-8 text-white" />
+          <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-[22px] shadow-2xl shadow-violet-500/30 ring-4 ring-white dark:ring-slate-800 transition-transform hover:scale-105 duration-300">
+            <AILogo className="h-full w-full" />
           </div>
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white mb-2">

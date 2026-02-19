@@ -68,8 +68,12 @@ export default function DashboardHeader({ mode, onModeChange }: DashboardHeaderP
           className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-[hsl(var(--foreground-secondary))] transition-colors hover:bg-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))]"
         >
           <span>Hello, {user?.name?.split(' ')[0] || 'User'}</span>
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-600 text-sm font-bold text-white shadow-lg shadow-violet-500/30">
-            {initials}
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-600 text-sm font-bold text-white shadow-lg shadow-violet-500/30 overflow-hidden">
+            {user?.avatar ? (
+              <img src={user.avatar} alt={user.name} className="h-full w-full object-cover" />
+            ) : (
+              initials
+            )}
           </div>
         </Link>
         <button

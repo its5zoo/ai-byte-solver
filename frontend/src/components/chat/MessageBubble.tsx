@@ -1,6 +1,8 @@
-import { User, Brain } from 'lucide-react';
+import { User } from 'lucide-react';
+import { AILogo } from '../ui/AILogo';
 import { cn } from '../../lib/utils';
 import { processAIResponse, processUserMessage } from '../../lib/markdownCleaner';
+import { useAuthStore } from '../../stores/authStore';
 
 interface Message {
   _id: string;
@@ -9,6 +11,7 @@ interface Message {
 }
 
 export default function MessageBubble({ message }: { message: Message }) {
+  const { user } = useAuthStore();
   const isUser = message.role === 'user';
   const raw = message.content?.trim() || '';
 
@@ -27,13 +30,21 @@ export default function MessageBubble({ message }: { message: Message }) {
       {/* Avatar */}
       <div
         className={cn(
-          'flex h-9 w-9 shrink-0 items-center justify-center rounded-full shadow-lg transition-transform hover:scale-110',
+          'flex h-9 w-9 shrink-0 items-center justify-center rounded-full shadow-lg transition-transform hover:scale-110 overflow-hidden',
           isUser
             ? 'bg-violet-600 text-white shadow-violet-500/20'
-            : 'bg-violet-600 text-white shadow-violet-500/30 ring-2 ring-white/20'
+            : 'ring-2 ring-violet-500/20 shadow-violet-500/30'
         )}
       >
-        {isUser ? <User className="h-4 w-4" /> : <Brain className="h-4 w-4" />}
+        {isUser ? (
+          user?.avatar ? (
+            <img src={user.avatar} alt={user.name} className="h-full w-full object-cover" />
+          ) : (
+            <User className="h-4 w-4" />
+          )
+        ) : (
+          <AILogo className="h-full w-full" />
+        )}
       </div>
 
       {/* Message bubble */}

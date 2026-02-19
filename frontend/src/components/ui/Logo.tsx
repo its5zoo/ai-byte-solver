@@ -1,4 +1,4 @@
-import { Brain } from 'lucide-react';
+import { AILogo } from './AILogo';
 import { cn } from '../../lib/utils';
 
 interface LogoProps {
@@ -17,11 +17,11 @@ export default function Logo({
     return (
         <div className={cn("flex items-center gap-2.5", className)}>
             <div className={cn(
-                "relative flex h-9 w-9 items-center justify-center rounded-xl bg-violet-600 shadow-lg shadow-violet-500/20 ring-1 ring-white/10 overflow-hidden group",
+                "relative flex h-9 w-9 items-center justify-center overflow-hidden group transition-transform hover:scale-105",
                 iconClassName
             )}>
-                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent opacity-0 group-hover:animate-shimmer" />
-                <Brain className="relative z-10 h-5 w-5 text-white" />
+                <AILogo className="relative z-10 w-full h-full" />
+                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent opacity-0 group-hover:animate-shimmer z-20 pointer-events-none" />
             </div>
             {showText && (
                 <span className={cn(
