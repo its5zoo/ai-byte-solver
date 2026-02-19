@@ -25,10 +25,13 @@ export default function Logo({
             </div>
             {showText && (
                 <span className={cn(
-                    "text-lg font-bold tracking-tight text-slate-900 dark:text-white",
+                    "relative text-lg font-extrabold tracking-tight",
                     textClassName
                 )}>
-                    AI Byte <span className="text-violet-600 dark:text-violet-400">Solver</span>
+                    <span className="bg-gradient-to-r from-neutral-900 via-neutral-400 to-neutral-900 bg-[length:200%_auto] bg-clip-text text-transparent animate-shimmer-text drop-shadow-[0_2px_4px_rgba(0,0,0,0.1)]">
+                        AI Byte
+                    </span>
+                    <span className="ml-1.5 text-violet-600 dark:text-violet-400">Solver</span>
                 </span>
             )}
         </div>

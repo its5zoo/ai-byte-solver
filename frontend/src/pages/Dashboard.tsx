@@ -242,7 +242,7 @@ export default function Dashboard() {
   const effectivePdfName = attachedPdfName ?? (effectivePdfId ? (pdfs.find((p) => p._id === effectivePdfId)?.originalName ?? null) : null);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
+    <div className="flex h-screen overflow-hidden bg-[hsl(var(--background))]">
       <LeftSidebar
         sessions={sessions}
         pdfs={pdfs}

@@ -41,20 +41,19 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           // Variant styles
           {
             // Primary
-            'bg-violet-600 text-white shadow-md shadow-violet-500/25 hover:bg-violet-700 hover:shadow-lg hover:shadow-violet-500/30':
+            'bg-[hsl(var(--primary))] text-white shadow-md shadow-[hsl(var(--primary)/0.25)] hover:bg-[hsl(var(--primary-hover))] hover:shadow-lg hover:shadow-[hsl(var(--primary)/0.3)]':
               variant === 'primary',
-            'dark:bg-violet-600 dark:hover:bg-violet-700': variant === 'primary',
 
             // Secondary
-            'bg-slate-200 text-slate-900 hover:bg-slate-300 dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600':
+            'bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--border))]':
               variant === 'secondary',
 
             // Outline
-            'border-2 border-violet-500 bg-transparent text-violet-600 hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-950/30':
+            'border-2 border-[hsl(var(--primary))] bg-transparent text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary-light)/0.3)]':
               variant === 'outline',
 
             // Ghost
-            'bg-transparent text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800':
+            'bg-transparent text-[hsl(var(--foreground-secondary))] hover:bg-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))]':
               variant === 'ghost',
 
             // Danger

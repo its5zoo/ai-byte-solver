@@ -21,7 +21,7 @@ export default function ProfileActions({ onLogout, onDeleteAccount }: ProfileAct
         <button
           type="button"
           onClick={onDeleteAccount}
-          className="text-sm text-slate-300/70 underline-offset-2 hover:text-slate-100 hover:underline"
+          className="text-sm text-[hsl(var(--foreground-tertiary))] underline-offset-2 hover:text-red-500 hover:underline transition-colors"
         >
           Delete account
         </button>

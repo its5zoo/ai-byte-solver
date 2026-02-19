@@ -4,6 +4,7 @@ import LearningStatistics from '../models/LearningStatistics.js';
 import { getAIResponse, getAIResponseNonStream } from '../services/aiService.js';
 import { recordActivity } from '../services/streakService.js';
 import { AppError } from '../middleware/errorHandler.js';
+import * as doubtController from './doubtController.js';
 
 const startOfDay = (d) => {
   const x = new Date(d);
@@ -155,10 +156,16 @@ export const sendMessage = async (req, res, next) => {
         title: session.title === 'New Chat' ? content?.substring(0, 50) || 'New Chat' : session.title,
       });
 
+      // --- NEW: Record Doubt & Extract Topic (Basic) ---
+      // In a real app, AI could extract the topic. Here we use a heuristic or simple extraction.
+      console.log(`[Chat] Recording doubt (stream) for user ${req.user.id}`);
+      const inferredTopic = 'General';
+      await doubtController.recordDoubt(req.user.id, content, inferredTopic);
+
       await updateDailyStats(req.user.id, 1, 2);
       await recordActivity(req.user.id);
 
-      res.write(`data: ${JSON.stringify({ done: true, messageId: aiMsg._id })}\n\n`);
+      res.write(`data: ${JSON.stringify({ done: true, messageId: aiMsg._id, topic: inferredTopic })}\n\n`);
       res.end();
     } else {
       const aiContent = await getAIResponseNonStream(messages, session.mode, session.pdfId);
@@ -174,6 +181,11 @@ export const sendMessage = async (req, res, next) => {
         title: session.title === 'New Chat' ? content?.substring(0, 50) || 'New Chat' : session.title,
       });
 
+      // --- NEW: Record Doubt ---
+      console.log(`[Chat] Recording doubt (non-stream) for user ${req.user.id}`);
+      const inferredTopic = 'General';
+      await doubtController.recordDoubt(req.user.id, content, inferredTopic);
+
       await updateDailyStats(req.user.id, 1, 2);
       await recordActivity(req.user.id);
 
@@ -181,6 +193,7 @@ export const sendMessage = async (req, res, next) => {
         success: true,
         userMessage: userMsg,
         aiMessage: aiMsg,
+        topic: inferredTopic,
       });
     }
   } catch (err) {

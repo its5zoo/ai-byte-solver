@@ -9,26 +9,29 @@ const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'gpt-oss:120b-cloud';
 const BASE_SYSTEM = `You are AI Byte Solver, a concise academic AI tutor for students.
 
 RESPONSE RULES (CRITICAL — follow these strictly):
-1. **CONCISE & DIRECT**: Answers must be short. No fluff. No "Here is the answer".
-2. **QUICK MODE**: 3-4 lines max. Core concept + Formula + One-line Real-life Example.
-3. **STEP-BY-STEP**: Use **BULLET POINTS ONLY**. Numbered list. Max 6 steps. Each step 1 sentence.
-4. **REAL-LIFE EXAMPLES**: REQUIRED. Explain concepts using everyday analogies (e.g., "Voltage is like water pressure").
-5. **FORMATTING**: Use clear bullet points. NO long paragraphs.
-6. **LANGUAGE**: English ONLY.
+1. ALWAYS be SHORT and TO-THE-POINT. Never write paragraphs of text.
+2. Quick answers: 3-5 lines max. Give the core concept, formula, and one-line example.
+3. Step-by-step: Use numbered steps. Each step = 1-2 lines. Max 6-8 steps.
+4. Example-based: Give 1-2 worked examples, brief explanation.
+5. NEVER repeat the question back. NEVER add unnecessary introductions or conclusions.
+6. Use bullet points for lists, not paragraphs.
+7. LANGUAGE: Answer ONLY in English. If a user asks in another language, respond in English explaining you only support English.
 
 MATH FORMATTING (CRITICAL):
 - Use LaTeX math: \\( inline \\) and \\[ block \\]
 - Example inline: The formula is \\( E = mc^2 \\)
-- Example block: \\[ \\oint_C \\vec{F} \\cdot d\\vec{r} = 0 \\]
-- ALWAYS use LaTeX for ANY math symbol (x, y, theta, etc).
+- Example block: \\[ \\oint_C \\vec{F} \\cdot d\\vec{r} = \\iint_D \\left( \\frac{\\partial Q}{\\partial x} - \\frac{\\partial P}{\\partial y} \\right) dA \\]
+- ALWAYS use LaTeX for ANY math symbol, variable, or formula. Never write math as plain text.
 
-TONE: Friendly, Academic, Exam-focused. Answer ONLY the question asked.`;
-
+TONE: Student-friendly, encouraging, exam-focused.
+SCOPE: ONLY academic content. Politely refuse non-study queries.
+ACCURACY: Answer ONLY the exact question asked. Never confuse topics.`;
 const SYLLABUS_MODE_ADDON = `
 MODE: Syllabus Mode
 - Answer ONLY from the provided syllabus content.
 - Mention PDF name and topic when answering.
 - If not in syllabus: "This topic is not in your uploaded syllabus. Switch to Open Mode or upload the relevant PDF."
+- EXCEPTION: If the user asks for a summary, overview, or list of topics/questions from the document, YOU MUST ANSWER using the document content.
 - Stay concise. Never hallucinate.`;
 
 const OPEN_MODE_ADDON = `
@@ -37,17 +40,45 @@ MODE: Open Source Mode
 - Keep answers concise and exam-focused.
 - Provide formulas, key points, and brief summaries.`;
 
+// Helper to find relevant context window
+const getSmartContext = (text, query) => {
+  if (!text) return '';
+  const MAX_CONTEXT = 15000;
 
-export const buildSystemPrompt = async (mode, pdfId) => {
+  // 1. Check for specific Question/Unit references
+  // Matches: "Question 5", "Q.5", "Q5", "Chapter 3", "Unit IV"
+  const targetMatch = query.match(/(?:question|q|chapter|unit)[\s.]*([0-9]+|[ivx]+)/i);
+
+  if (targetMatch) {
+    // Try to find this pattern in the text
+    const pattern = new RegExp(`(?:question|q|chapter|unit)[\\s.]*${targetMatch[1]}`, 'i');
+    const index = text.search(pattern);
+
+    if (index !== -1) {
+      // Found it! Center context around it.
+      const start = Math.max(0, index - 2000); // 2k chars before
+      const end = Math.min(text.length, start + MAX_CONTEXT);
+      console.log(`[Smart Context] Found target "${targetMatch[0]}" at index ${index}. Slicing ${start}-${end}.`);
+      return `...${text.substring(start, end)}...`;
+    }
+  }
+
+  // 2. Default: Return start of text (good for summaries/intros)
+  return text.substring(0, MAX_CONTEXT);
+};
+
+export const buildSystemPrompt = async (mode, pdfId, userQuery = '') => {
   let system = BASE_SYSTEM;
 
   if (pdfId) {
     const pdf = await UploadedPDF.findById(pdfId).lean();
     if (pdf?.extractedText) {
-      // Common PDF context for both modes
+      // Use Smart Context
+      const relevantText = getSmartContext(pdf.extractedText, userQuery);
+
       const pdfContext = `
 ## Reference Material (from: ${pdf.originalName})
-${pdf.extractedText.substring(0, 15000)}
+${relevantText}
 `;
 
       if (mode === 'syllabus') {
@@ -127,14 +158,16 @@ async function* streamOllama(body) {
 }
 
 export const getAIResponse = async function* (messages, mode, pdfId) {
-  const systemPrompt = await buildSystemPrompt(mode, pdfId);
+  const lastUserMessage = messages[messages.length - 1]?.content || '';
+  const systemPrompt = await buildSystemPrompt(mode, pdfId, lastUserMessage);
   const apiMessages = [{ role: 'system', content: systemPrompt }, ...messages];
   const res = await callOllama(apiMessages, true);
   yield* streamOllama(res.body);
 };
 
 export const getAIResponseNonStream = async (messages, mode, pdfId) => {
-  const systemPrompt = await buildSystemPrompt(mode, pdfId);
+  const lastUserMessage = messages[messages.length - 1]?.content || '';
+  const systemPrompt = await buildSystemPrompt(mode, pdfId, lastUserMessage);
   const apiMessages = [{ role: 'system', content: systemPrompt }, ...messages];
 
   const url = `${OLLAMA_BASE}/api/chat`;

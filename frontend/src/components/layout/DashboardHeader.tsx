@@ -29,20 +29,20 @@ export default function DashboardHeader({ mode, onModeChange }: DashboardHeaderP
     .slice(0, 2) || '?';
 
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white/90 px-4 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+    <header className="glass sticky top-0 z-50 flex h-14 shrink-0 items-center justify-between border-b px-4 transition-all">
       <div className="flex items-center gap-6">
         <Link to="/chat" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
           <Logo />
         </Link>
-        <div className="flex rounded-lg bg-slate-100 p-0.5 dark:bg-slate-800">
+        <div className="flex rounded-lg bg-[hsl(var(--muted))] p-0.5">
           <button
             type="button"
             onClick={() => onModeChange?.('syllabus')}
             className={cn(
-              'rounded-md px-4 py-2 text-sm font-medium transition-colors',
+              'rounded-md px-4 py-2 text-sm font-bold transition-all duration-300',
               mode === 'syllabus'
-                ? 'bg-violet-600 text-white shadow-md'
-                : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/30 scale-105'
+                : 'text-[hsl(var(--foreground-secondary))] hover:bg-[hsl(var(--muted))] hover:text-emerald-600'
             )}
           >
             Syllabus Mode
@@ -51,10 +51,10 @@ export default function DashboardHeader({ mode, onModeChange }: DashboardHeaderP
             type="button"
             onClick={() => onModeChange?.('open')}
             className={cn(
-              'rounded-md px-4 py-2 text-sm font-medium transition-colors',
+              'rounded-md px-4 py-2 text-sm font-bold transition-all duration-300',
               mode === 'open'
-                ? 'bg-violet-600 text-white shadow-md'
-                : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                ? 'bg-violet-600 text-white shadow-md shadow-violet-500/30 scale-105'
+                : 'text-[hsl(var(--foreground-secondary))] hover:bg-[hsl(var(--muted))] hover:text-violet-600'
             )}
           >
             Open Mode
@@ -65,17 +65,17 @@ export default function DashboardHeader({ mode, onModeChange }: DashboardHeaderP
       <div className="flex items-center gap-3">
         <Link
           to="/profile"
-          className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+          className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-[hsl(var(--foreground-secondary))] transition-colors hover:bg-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))]"
         >
           <span>Hello, {user?.name?.split(' ')[0] || 'User'}</span>
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-100 text-sm font-semibold text-violet-700 dark:bg-violet-900/50 dark:text-violet-300">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-600 text-sm font-bold text-white shadow-lg shadow-violet-500/30">
             {initials}
           </div>
         </Link>
         <button
           type="button"
           onClick={toggleTheme}
-          className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+          className="rounded-lg p-2 text-[hsl(var(--foreground-secondary))] hover:bg-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))] transition-colors"
           aria-label="Toggle theme"
         >
           {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
@@ -86,7 +86,7 @@ export default function DashboardHeader({ mode, onModeChange }: DashboardHeaderP
             useAuthStore.getState().logout();
             window.location.href = '/login';
           }}
-          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
+          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-[hsl(var(--foreground-secondary))] hover:bg-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))] transition-colors"
         >
           <LogOut className="h-4 w-4" />
           Logout

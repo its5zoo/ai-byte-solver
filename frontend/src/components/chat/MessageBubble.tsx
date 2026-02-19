@@ -27,10 +27,10 @@ export default function MessageBubble({ message }: { message: Message }) {
       {/* Avatar */}
       <div
         className={cn(
-          'flex h-9 w-9 shrink-0 items-center justify-center rounded-full',
+          'flex h-9 w-9 shrink-0 items-center justify-center rounded-full shadow-lg transition-transform hover:scale-110',
           isUser
-            ? 'bg-violet-600 text-white'
-            : 'bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300'
+            ? 'bg-violet-600 text-white shadow-violet-500/20'
+            : 'bg-violet-600 text-white shadow-violet-500/30 ring-2 ring-white/20'
         )}
       >
         {isUser ? <User className="h-4 w-4" /> : <Brain className="h-4 w-4" />}
@@ -39,10 +39,10 @@ export default function MessageBubble({ message }: { message: Message }) {
       {/* Message bubble */}
       <div
         className={cn(
-          'group relative rounded-2xl px-4 py-3 shadow-sm transition-all',
+          'group relative rounded-2xl px-4 py-3 shadow-md transition-all',
           isUser
-            ? 'max-w-[85%] bg-violet-600 text-white'
-            : 'max-w-[95%] bg-white border border-slate-200 dark:bg-slate-800 dark:border-slate-700'
+            ? 'max-w-[85%] bg-gradient-to-br from-violet-600 to-indigo-700 text-white shadow-lg shadow-violet-500/20'
+            : 'max-w-[95%] glass-elevated border border-[hsl(var(--glass-border))]'
         )}
       >
         <div
@@ -52,8 +52,8 @@ export default function MessageBubble({ message }: { message: Message }) {
           className={cn(
             'text-sm leading-relaxed break-words',
             isUser
-              ? '[&_*]:text-white [&_code]:bg-violet-500/40 [&_code]:text-white'
-              : 'text-slate-800 dark:text-slate-100 [&_strong]:font-semibold [&_code]:bg-slate-100 [&_code]:dark:bg-slate-700',
+              ? '[&_*]:text-white [&_code]:bg-white/20 [&_code]:text-white'
+              : 'text-[hsl(var(--foreground))] [&_strong]:text-[hsl(var(--foreground))] [&_strong]:font-bold [&_code]:bg-[hsl(var(--muted))] [&_code]:text-[hsl(var(--primary))]',
             // Paragraphs
             '[&_p]:my-1.5 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0',
             // Lists — tight, consistent indentation

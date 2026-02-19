@@ -20,14 +20,14 @@ const StatItem = ({
   label: string;
   accent?: 'emerald' | 'violet' | 'orange';
 }) => (
-  <div className="flex flex-col items-center rounded-xl p-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50">
+  <div className="flex flex-col items-center rounded-xl p-4 transition-colors hover:bg-[hsl(var(--glass-bg)/0.5)]">
     <div
       className={cn(
         'mb-2 flex h-12 w-12 items-center justify-center rounded-xl',
-        accent === 'emerald' && 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400',
-        accent === 'violet' && 'bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-400',
-        accent === 'orange' && 'bg-orange-100 text-orange-600 dark:bg-orange-900/40 dark:text-orange-400',
-        !accent && 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+        accent === 'emerald' && 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+        accent === 'violet' && 'bg-violet-500/10 text-violet-600 dark:text-violet-400',
+        accent === 'orange' && 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
+        !accent && 'bg-[hsl(var(--muted))] text-[hsl(var(--foreground-secondary))]'
       )}
     >
       <Icon className="h-6 w-6" />
@@ -38,12 +38,12 @@ const StatItem = ({
         accent === 'emerald' && 'text-emerald-600 dark:text-emerald-400',
         accent === 'violet' && 'text-violet-600 dark:text-violet-400',
         accent === 'orange' && 'text-orange-600 dark:text-orange-400',
-        !accent && 'text-gray-900 dark:text-white'
+        !accent && 'text-[hsl(var(--foreground))]'
       )}
     >
       {value}
     </p>
-    <p className="mt-0.5 text-center text-xs font-medium text-gray-600 dark:text-gray-400">{label}</p>
+    <p className="mt-0.5 text-center text-xs font-medium text-[hsl(var(--foreground-secondary))]">{label}</p>
   </div>
 );
 

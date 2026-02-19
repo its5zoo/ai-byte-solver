@@ -4,12 +4,14 @@ import { Send, Loader2, HelpCircle, Sparkles, FileText, X } from 'lucide-react';
 import Button from '../ui/Button';
 import MessageBubble from './MessageBubble';
 import { cn } from '../../lib/utils';
+import { useThemeStore } from '../../stores/themeStore';
 
 interface Message {
   _id: string;
   role: 'user' | 'assistant';
   content: string;
   createdAt?: string;
+  topic?: string; // New: Topic from backend
 }
 
 
@@ -49,10 +51,18 @@ export default function ChatPanel({
   attachedPdfId,
   onClearPdf,
 }: ChatPanelProps) {
+  const { theme } = useThemeStore();
+  const isDark = theme === 'dark' || (theme === 'system' && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   const [input, setInput] = useState('');
   const [selectedChip, setSelectedChip] = useState<string>('quick');
+  const [explainCount, setExplainCount] = useState<Record<string, number>>({}); // topic -> count
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Get the last message to check if it's from AI and we should offer help
+  const lastMessage = messages[messages.length - 1];
+  const lastTopic = lastMessage?.role === 'assistant' ? lastMessage.topic || 'General' : null;
+  const showExplainChip = lastTopic && (explainCount[lastTopic] || 0) < 3;
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -81,6 +91,12 @@ export default function ChatPanel({
     } catch (_) {
       // Error shown via parent error state
     }
+  }
+
+  const handleExplainSimply = () => {
+    if (!lastTopic) return;
+    setExplainCount(prev => ({ ...prev, [lastTopic]: (prev[lastTopic] || 0) + 1 }));
+    handleSubmit(undefined, "Can you explain this to me in a simple way?");
   };
 
   const showWelcome = messages.length === 0;
@@ -89,7 +105,7 @@ export default function ChatPanel({
   const selectedPdf = pdfs.find(p => p._id === attachedPdfId);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[hsl(var(--background)/0.5)] transition-colors">
       {/* Messages area */}
       <div className="min-h-0 flex-1 overflow-y-auto custom-scrollbar">
         <div className="mx-auto w-full px-6 py-6 lg:px-12">
@@ -126,7 +142,7 @@ export default function ChatPanel({
               </p>
 
               <div className="flex flex-col items-center justify-center gap-2">
-                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                <p className="text-sm font-medium text-[hsl(var(--foreground-tertiary))]">
                   {selectedPdf
                     ? `Using: ${selectedPdf.originalName}`
                     : 'Upload your file to solve your doubts'
@@ -164,7 +180,7 @@ export default function ChatPanel({
       </div>
 
       {/* Input area */}
-      <div className="border-t border-slate-200 bg-white/90 backdrop-blur-lg px-4 py-4 dark:border-slate-800 dark:bg-slate-900/90">
+      <div className="glass-elevated border-t border-[hsl(var(--glass-border))] px-4 py-4">
         <div className="mx-auto max-w-3xl space-y-3">
 
           {/* Selected PDF Badge */}
@@ -204,12 +220,22 @@ export default function ChatPanel({
                   {chip.label}
                 </button>
               ))}
+
+              {showExplainChip && (
+                <button
+                  type="button"
+                  onClick={handleExplainSimply}
+                  className="animate-fade-in-up rounded-full px-4 py-2 text-sm font-medium transition-all bg-emerald-100 text-emerald-800 border border-emerald-200 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800 dark:hover:bg-emerald-900/50"
+                >
+                  ✨ Explain Simply
+                </button>
+              )}
             </div>
           )}
 
           {/* Input and send button */}
-          <div className="flex gap-3">
-            <div className="flex flex-1 items-center gap-2 rounded-2xl border border-slate-300 bg-slate-50/80 py-2 pl-5 pr-2 dark:border-slate-700 dark:bg-slate-800/50 focus-within:border-violet-500 focus-within:ring-2 focus-within:ring-violet-500/20 transition-all">
+          <div className="flex gap-3 px-2">
+            <div className="flex flex-1 items-center gap-3 rounded-2xl border-2 border-slate-200 bg-white/60 py-1.5 pl-5 pr-1.5 focus-within:border-violet-500 focus-within:ring-4 focus-within:ring-violet-500/10 transition-all duration-300 shadow-xl shadow-slate-200/40 backdrop-blur-xl dark:border-white/10 dark:bg-white/5 dark:focus-within:border-violet-500 dark:shadow-none">
               <textarea
                 ref={textareaRef}
                 value={input}
@@ -223,23 +249,27 @@ export default function ChatPanel({
                 placeholder="Ask your doubt to Byte AI"
                 rows={1}
                 disabled={isLoading}
-                className="max-h-32 flex-1 resize-none bg-transparent text-base text-slate-900 placeholder:text-slate-500 border-none outline-none ring-0 focus:ring-0 focus:outline-none shadow-none appearance-none dark:text-slate-100 dark:placeholder:text-slate-400 custom-scrollbar"
+                className="max-h-32 flex-1 resize-none bg-transparent py-2.5 text-base font-bold placeholder:!text-slate-500 !border-none !outline-none !ring-0 focus:!ring-0 focus:!outline-none shadow-none appearance-none dark:placeholder:!text-slate-400 custom-scrollbar"
+                style={{
+                  color: isDark ? '#ffffff' : '#020617',
+                  caretColor: isDark ? '#ffffff' : '#020617'
+                }}
               />
               <Button
                 type="button"
                 onClick={() => handleSubmit(undefined)}
                 disabled={isLoading || !input.trim()}
                 className={cn(
-                  "h-10 w-10 shrink-0 rounded-full p-0 transition-all duration-300",
+                  "h-10 w-10 shrink-0 rounded-xl p-0 transition-all duration-300 hover:scale-110 active:scale-90",
                   input.trim()
-                    ? "bg-gradient-to-r from-violet-600 to-violet-700 text-white shadow-md shadow-violet-500/30 hover:shadow-lg hover:shadow-violet-500/40 hover:scale-105 active:scale-95"
-                    : "bg-slate-200 text-slate-400 dark:bg-slate-700 dark:text-slate-500"
+                    ? "bg-gradient-to-br from-violet-600 via-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-500/30 ring-2 ring-white/20"
+                    : "bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-slate-600"
                 )}
               >
                 {isLoading ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
-                  <Send className="h-5 w-5 ml-0.5" />
+                  <Send className="h-5 w-5 fill-white/10" />
                 )}
               </Button>
             </div>

@@ -41,8 +41,8 @@ export default function ThemePreferencesCard({
                 className={cn(
                   'inline-flex items-center gap-2 rounded-xl border-2 px-4 py-2.5 text-sm font-medium transition-colors',
                   theme === opt.value
-                    ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:border-emerald-500 dark:bg-emerald-900/30 dark:text-emerald-300'
-                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                    ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary-light)/0.3)] text-[hsl(var(--primary))]'
+                    : 'border-[hsl(var(--glass-border))] bg-[hsl(var(--glass-bg)/0.5)] text-[hsl(var(--foreground-secondary))] hover:border-[hsl(var(--primary)/0.5)] hover:text-[hsl(var(--foreground))]'
                 )}
               >
                 <opt.icon className="h-4 w-4" />
@@ -52,12 +52,12 @@ export default function ThemePreferencesCard({
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
-            <Globe className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[hsl(var(--muted))] text-[hsl(var(--foreground-secondary))]">
+            <Globe className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Language</p>
-            <p className="text-sm font-medium text-gray-900 dark:text-white">{language}</p>
+            <p className="text-xs font-medium text-[hsl(var(--foreground-tertiary))]">Language</p>
+            <p className="text-sm font-medium text-[hsl(var(--foreground))]">{language}</p>
           </div>
         </div>
       </CardContent>

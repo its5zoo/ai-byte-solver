@@ -35,6 +35,13 @@ interface Streak {
   lastActiveDate?: string;
 }
 
+interface Doubt {
+  _id: string;
+  question: string;
+  frequency: number;
+  lastAsked: string;
+}
+
 interface QuizAttempt {
   percentage?: number;
 }
@@ -50,22 +57,28 @@ export default function Profile() {
   const [streak, setStreak] = useState<Streak | null>(null);
   const [topics, setTopics] = useState<{ topic: string; count: number }[]>([]);
   const [quizPerformance, setQuizPerformance] = useState<QuizAttempt[]>([]);
+  const [doubts, setDoubts] = useState<Doubt[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadProfile = useCallback(async () => {
     try {
-      const [userRes, summaryRes, streakRes, topicsRes, quizRes] = await Promise.all([
+      const [userRes, summaryRes, streakRes, topicsRes, quizRes, doubtsRes] = await Promise.all([
         api.get('/users/me'),
         api.get('/stats/summary'),
         api.get('/streaks'),
         api.get('/stats/topics'),
+        api.get('/stats/topics'),
         api.get('/stats/quiz'),
+        // @ts-ignore
+        api.getTopDoubts(10),
       ]);
       setFullUser(userRes.data.user || null);
       setSummary(summaryRes.data.summary || null);
       setStreak(streakRes.data.streak || null);
       setTopics(topicsRes.data.topics || []);
       setQuizPerformance(quizRes.data.performance || []);
+      // @ts-ignore
+      setDoubts(doubtsRes?.data?.doubts || []);
     } catch {
       setFullUser(null);
     } finally {
@@ -95,7 +108,7 @@ export default function Profile() {
     const isDark =
       t === 'dark' || (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
     root.classList.toggle('dark', isDark);
-    api.patch('/users/me', { preferences: { theme: t } }).catch(() => {});
+    api.patch('/users/me', { preferences: { theme: t } }).catch(() => { });
   };
 
   const handleLogout = () => {
@@ -133,11 +146,11 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-950 dark:to-gray-900">
+    <div className="min-h-screen bg-[var(--bg-gradient)] bg-attachment-fixed transition-colors">
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <Link
           to="/chat"
-          className="mb-8 inline-flex items-center gap-2 text-sm font-semibold text-gray-700 transition-colors hover:text-emerald-600 dark:text-gray-300 dark:hover:text-emerald-400"
+          className="mb-8 inline-flex items-center gap-2 text-sm font-semibold text-[hsl(var(--foreground-secondary))] transition-colors hover:text-[hsl(var(--primary))]"
         >
           <ChevronLeft className="h-4 w-4" />
           Back to Dashboard
@@ -180,13 +193,33 @@ export default function Profile() {
             lastQuizScore={quizPerformance[0]?.percentage ?? null}
           />
 
+          {doubts.length > 0 && (
+            <div className="glass rounded-2xl border border-[hsl(var(--glass-border))] p-6 shadow-sm">
+              <h3 className="mb-4 text-lg font-bold text-slate-900 dark:text-white">
+                Frequently Asked Doubts
+              </h3>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {doubts.map((d) => (
+                  <div key={d._id} className="rounded-xl border border-slate-200 bg-white/50 p-3 text-sm dark:border-slate-700 dark:bg-slate-800/50">
+                    <p className="font-medium text-slate-800 dark:text-slate-200 mb-1 line-clamp-2" title={d.question}>
+                      {d.question}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Asked {d.frequency} times • Last: {new Date(d.lastAsked).toLocaleDateString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <ThemePreferencesCard
             theme={(theme as 'light' | 'dark' | 'system') || 'system'}
             language={user?.preferences?.language === 'en' ? 'English' : 'English'}
             onThemeChange={applyTheme}
           />
 
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+          <div className="glass rounded-2xl border border-[hsl(var(--glass-border))] p-6 shadow-sm">
             <ProfileActions onLogout={handleLogout} />
           </div>
         </div>

@@ -12,7 +12,7 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
     <div
       ref={ref}
       className={cn(
-        'rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900',
+        'glass rounded-2xl border transition-all duration-300',
         'transition-all duration-300',
         {
           'glass': glass,

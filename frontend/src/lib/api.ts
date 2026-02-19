@@ -29,4 +29,7 @@ api.interceptors.response.use(
   }
 );
 
+// @ts-ignore
+api.getTopDoubts = (limit = 5) => api.get(`/doubts?limit=${limit}`);
+
 export default api;

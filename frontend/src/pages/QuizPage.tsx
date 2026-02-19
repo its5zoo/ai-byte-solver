@@ -37,7 +37,7 @@ function normalizeMathMarkdown(input: string): string {
     if (i % 2 === 0) {
       // Wrap bare LaTeX sequences in $...$
       // Use callback to ensure correct replacement without special character issues
-      return part.replace(BARE_LATEX_RE, (match, group1) => `$${group1}$`);
+      return part.replace(BARE_LATEX_RE, (_match, group1) => `$${group1}$`);
     }
     return part;
   }).join('');
@@ -176,7 +176,7 @@ export default function QuizPage() {
 
   if (!sessionId) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gradient-to-b from-slate-50 to-white p-4 dark:from-slate-950 dark:to-slate-900">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[hsl(var(--background))] p-4 transition-all">
         <HelpCircle className="h-16 w-16 text-violet-600 dark:text-violet-400" />
         <p className="text-slate-600 dark:text-slate-400 text-center max-w-md">
           No chat selected. Start a chat first, then come back to take a quiz.
@@ -246,22 +246,20 @@ export default function QuizPage() {
         {step === 'quiz' && quiz && currentQ && (
           <div className="space-y-6 animate-fade-in-up">
             {/* Header with progress */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between mb-3">
-                  <CardTitle className="text-2xl">{quiz.title}</CardTitle>
-                  <Badge variant="primary" size="lg">
-                    {currentQuestion + 1} / {quiz.questions.length}
-                  </Badge>
-                </div>
-                <div className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-violet-600 to-violet-500 transition-all duration-500 ease-out"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-              </CardHeader>
-            </Card>
+            <div className="glass rounded-2xl border border-[hsl(var(--glass-border))] p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <CardTitle className="text-2xl text-[hsl(var(--foreground))]">{quiz.title}</CardTitle>
+                <Badge variant="primary" size="lg">
+                  {currentQuestion + 1} / {quiz.questions.length}
+                </Badge>
+              </div>
+              <div className="w-full h-2 bg-[hsl(var(--muted))] rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--primary-hover))] transition-all duration-500 ease-out"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
 
             {error && (
               <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 dark:bg-red-900/30 dark:border-red-800 dark:text-red-300">

@@ -17,15 +17,15 @@ const InfoRow = ({
   label: string;
   value: string;
 }) => (
-  <div className="flex items-start gap-3 border-b border-gray-100 py-3 last:border-0 dark:border-gray-800">
-    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+  <div className="flex items-start gap-3 border-b border-[hsl(var(--glass-border))] py-3 last:border-0">
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[hsl(var(--muted))] text-[hsl(var(--foreground-secondary))]">
       <Icon className="h-4 w-4" />
     </div>
     <div className="min-w-0 flex-1">
-      <p className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+      <p className="text-xs font-medium uppercase tracking-wider text-[hsl(var(--foreground-tertiary))]">
         {label}
       </p>
-      <p className="mt-0.5 truncate text-sm font-medium text-gray-900 dark:text-white">{value}</p>
+      <p className="mt-0.5 truncate text-sm font-medium text-[hsl(var(--foreground))]">{value}</p>
     </div>
   </div>
 );
@@ -38,10 +38,10 @@ export default function AccountInfoCard({
 }: AccountInfoCardProps) {
   const formattedDate = createdAt
     ? new Date(createdAt).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      })
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
     : null;
 
   return (

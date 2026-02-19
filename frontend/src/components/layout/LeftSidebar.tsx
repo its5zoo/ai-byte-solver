@@ -106,8 +106,8 @@ export default function LeftSidebar({
         className={cn(
           'group flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm transition-colors',
           location.pathname === `/chat/${s._id}`
-            ? 'bg-violet-500/15 text-violet-700 dark:text-violet-300'
-            : 'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
+            ? 'bg-[hsl(var(--primary-light))] text-[hsl(var(--primary))]'
+            : 'text-[hsl(var(--foreground-secondary))] hover:bg-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))]'
         )}
       >
         <MessageSquare className="h-4 w-4 shrink-0 opacity-80" />
@@ -117,7 +117,7 @@ export default function LeftSidebar({
           <button
             type="button"
             onClick={(e) => handleShare(e, s._id)}
-            className="shrink-0 rounded p-1 text-slate-500 hover:bg-violet-100 hover:text-violet-600 dark:hover:bg-violet-900/30 dark:hover:text-violet-400 mr-0.5"
+            className="shrink-0 rounded p-1 text-[hsl(var(--foreground-tertiary))] hover:bg-[hsl(var(--primary-light))] hover:text-[hsl(var(--primary))] mr-0.5"
             aria-label="Copy link"
             title="Copy link"
           >
@@ -126,7 +126,7 @@ export default function LeftSidebar({
           <button
             type="button"
             onClick={(e) => handleDelete(e, s._id)}
-            className="shrink-0 rounded p-1 text-slate-500 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400"
+            className="shrink-0 rounded p-1 text-[hsl(var(--foreground-tertiary))] hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/40"
             aria-label="Delete chat"
             title="Delete chat"
           >
@@ -139,8 +139,8 @@ export default function LeftSidebar({
   const initials = user?.name?.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2) || '?';
 
   return (
-    <aside className="flex h-full w-64 flex-col border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-      <div className="flex h-14 shrink-0 items-center px-4 border-b border-slate-200 dark:border-slate-800">
+    <aside className="glass flex h-full w-64 flex-col border-r transition-all">
+      <div className="flex h-14 shrink-0 items-center px-4 border-b border-[hsl(var(--glass-border))]">
         <Logo showText />
       </div>
 
@@ -154,12 +154,17 @@ export default function LeftSidebar({
           New Chat
         </button>
 
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
+        <div className="rounded-xl border border-[hsl(var(--glass-border))] bg-[hsl(var(--glass-bg)/0.5)] p-3 shadow-sm">
           <div className="mb-2 flex items-center gap-2">
-            <FileText className="h-5 w-5 text-slate-500 dark:text-slate-400" />
-            <span className="font-medium text-slate-900 dark:text-white">Upload PDF</span>
+            <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <span
+              className="font-black text-white uppercase tracking-tighter"
+              style={{ textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000' }}
+            >
+              Upload PDF
+            </span>
           </div>
-          <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">knowledge base & syllabus</p>
+          <p className="mb-3 text-[10px] font-black text-slate-900 dark:text-slate-300 uppercase tracking-widest opacity-80">knowledge base & syllabus</p>
           <button
             type="button"
             onClick={onUploadClick}
@@ -190,8 +195,8 @@ export default function LeftSidebar({
         )}
 
         {pdfs.length > 0 && (
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-800/50">
-            <p className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <div className="rounded-xl border border-slate-200/50 bg-white/40 p-2 shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-white/5">
+            <p className="mb-2 px-1 text-[10px] font-black uppercase tracking-widest text-black dark:text-white">
               Library
             </p>
             <ul className="space-y-1">
@@ -203,8 +208,8 @@ export default function LeftSidebar({
                     attachedPdfId === pdf._id ? 'bg-violet-100 dark:bg-violet-900/40' : 'hover:bg-slate-200/50 dark:hover:bg-slate-700/50'
                   )}
                 >
-                  <FileText className="h-4 w-4 shrink-0 text-slate-500 dark:text-slate-400" />
-                  <span className="min-w-0 flex-1 truncate text-slate-700 dark:text-slate-300" title={pdf.originalName}>
+                  <FileText className="h-4 w-4 shrink-0 text-[hsl(var(--primary))]" />
+                  <span className="min-w-0 flex-1 truncate text-[hsl(var(--foreground-secondary))] font-medium" title={pdf.originalName}>
                     {pdf.originalName}
                   </span>
                   <div className="flex shrink-0 gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -224,7 +229,7 @@ export default function LeftSidebar({
                     <button
                       type="button"
                       onClick={() => onDeletePdf(pdf._id)}
-                      className="rounded p-1 text-slate-500 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400"
+                      className="rounded p-1 text-[hsl(var(--foreground-tertiary))] hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/40"
                       title="Delete PDF"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -237,7 +242,7 @@ export default function LeftSidebar({
         )}
 
         <div className="min-h-0 flex-1">
-          <p className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <p className="mb-2 px-2 text-[10px] font-black uppercase tracking-widest text-black dark:text-white">
             History
           </p>
           {grouped.today.length > 0 && (
@@ -273,11 +278,21 @@ export default function LeftSidebar({
             {initials}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-slate-900 dark:text-white">{user?.name || 'User'}</p>
-            <p className="truncate text-xs text-slate-500 dark:text-slate-400">{user?.email || ''}</p>
+            <p
+              className="truncate text-sm font-black text-white"
+              style={{ textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000' }}
+            >
+              {user?.name || 'User'}
+            </p>
+            <p
+              className="truncate text-[10px] font-black text-white/90 uppercase tracking-wider"
+              style={{ textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000' }}
+            >
+              {user?.email || ''}
+            </p>
           </div>
         </div>
       </Link>
-    </aside>
+    </aside >
   );
 }

@@ -1,4 +1,6 @@
-import { BarChart3, TrendingUp, LineChart } from 'lucide-react';
+import { BarChart3, TrendingUp, LineChart, HelpCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import api from '../../lib/api';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { cn } from '../../lib/utils';
 
@@ -25,6 +27,12 @@ interface RightSidebarProps {
   topics: { topic: string; count: number }[];
 }
 
+interface Doubt {
+  _id: string;
+  question: string;
+  count: number;
+}
+
 const WEEK_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 // Backend weeklyActivity: 0=Sun, 1=Mon, ... 6=Sat. Display Mon–Sun.
 const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
@@ -40,10 +48,17 @@ export default function RightSidebar({ summary, streak, timeline: _timeline, top
   const weekActivity = WEEK_ORDER.map((i) => rawWeek[i] ?? 0);
   const streakDays = streak?.currentStreak ?? 0;
 
+  const [doubts, setDoubts] = useState<Doubt[]>([]);
+
+  useEffect(() => {
+    // @ts-ignore
+    api.getTopDoubts?.(5).then(res => setDoubts(res.data.doubts || [])).catch(() => { });
+  }, [summary]); // Refresh when summary updates (implies chat activity)
+
   return (
-    <aside className="flex h-full w-80 flex-col overflow-y-auto border-l border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-      <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
-        <LineChart className="h-5 w-5 text-violet-500" />
+    <aside className="glass flex h-full w-80 flex-col overflow-y-auto border-l p-4 transition-all">
+      <h3 className="mb-4 flex items-center gap-2 text-sm font-extrabold text-slate-900 dark:text-white">
+        <LineChart className="h-5 w-5 text-blue-600 dark:text-blue-400" />
         Learning Insights
       </h3>
 
@@ -51,17 +66,17 @@ export default function RightSidebar({ summary, streak, timeline: _timeline, top
         {topTopics.length > 0 && (
           <Card className="overflow-hidden">
             <CardHeader className="py-2.5 pb-1">
-              <CardTitle className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <CardTitle className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
                 Most Asked Topics
               </CardTitle>
-              <p className="text-xs text-slate-400 dark:text-slate-500">Based on last 30 days</p>
+              <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Based on last 30 days</p>
             </CardHeader>
             <CardContent className="space-y-3 pb-3">
               {topTopics.map((t, i) => (
                 <div key={t.topic}>
                   <div className="mb-1 flex justify-between text-xs">
-                    <span className="truncate text-slate-700 dark:text-slate-300">{t.topic}</span>
-                    <span className="tabular-nums text-slate-500">{t.percent}%</span>
+                    <span className="truncate text-[hsl(var(--foreground-secondary))]">{t.topic}</span>
+                    <span className="tabular-nums text-[hsl(var(--foreground-tertiary))]">{t.percent}%</span>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                     <div
@@ -78,12 +93,32 @@ export default function RightSidebar({ summary, streak, timeline: _timeline, top
           </Card>
         )}
 
+        {doubts.length > 0 && (
+          <Card className="overflow-hidden">
+            <CardHeader className="py-2.5 pb-1">
+              <CardTitle className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                Frequent Doubts
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 pb-3">
+              {doubts.map((d) => (
+                <div key={d._id} className="flex items-start gap-2 text-xs">
+                  <HelpCircle className="h-3.5 w-3.5 mt-0.5 text-violet-500 shrink-0" />
+                  <span className="text-[hsl(var(--foreground-secondary))] line-clamp-2" title={d.question}>
+                    {d.question}
+                  </span>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
         <Card className="overflow-hidden">
           <CardHeader className="py-2.5 pb-1">
-            <CardTitle className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <CardTitle className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
               Study Consistency
             </CardTitle>
-            <p className="text-xs text-slate-400 dark:text-slate-500">This week</p>
+            <p className="text-xs font-medium text-slate-600 dark:text-slate-400">This week</p>
           </CardHeader>
           <CardContent className="pb-3">
             <div className="mb-2 flex justify-between">
@@ -104,8 +139,8 @@ export default function RightSidebar({ summary, streak, timeline: _timeline, top
               </div>
             </div>
             <p className="text-sm">
-              <span className="font-bold text-violet-500">{streakDays} days</span>
-              <span className="text-slate-500 dark:text-slate-400"> streak</span>
+              <span className="font-bold text-[hsl(var(--primary))]">{streakDays} days</span>
+              <span className="text-[hsl(var(--foreground-secondary))]"> streak</span>
             </p>
           </CardContent>
         </Card>
@@ -113,27 +148,39 @@ export default function RightSidebar({ summary, streak, timeline: _timeline, top
         <div className="grid grid-cols-1 gap-3">
           <Card className="overflow-hidden">
             <CardContent className="flex items-center gap-3 p-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/40">
-                <BarChart3 className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-600 shadow-xl shadow-violet-500/30 ring-4 ring-white/10 overflow-hidden relative">
+                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent animate-shimmer" />
+                <BarChart3 className="relative z-10 h-7 w-7 text-white" />
               </div>
               <div>
-                <p className="text-2xl font-bold tabular-nums text-slate-900 dark:text-white">
+                <p
+                  className="text-4xl font-black tabular-nums text-white leading-none mb-1 drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]"
+                  style={{ textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 0 1px 2px rgba(0,0,0,0.5)' }}
+                >
                   {summary?.doubtsSolved ?? 0}
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Doubts Solved</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-900 dark:text-slate-300">
+                  Doubts Solved
+                </p>
               </div>
             </CardContent>
           </Card>
           <Card className="overflow-hidden">
             <CardContent className="flex items-center gap-3 p-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/40">
-                <TrendingUp className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-600 shadow-xl shadow-violet-500/30 ring-4 ring-white/10 overflow-hidden relative">
+                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent animate-shimmer" />
+                <TrendingUp className="relative z-10 h-7 w-7 text-white" />
               </div>
               <div>
-                <p className="text-2xl font-bold tabular-nums text-slate-900 dark:text-white">
+                <p
+                  className="text-4xl font-black tabular-nums text-white leading-none mb-1 drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]"
+                  style={{ textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 0 1px 2px rgba(0,0,0,0.5)' }}
+                >
                   {summary?.quizAttempts ?? 0}
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Quizzes Taken</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-900 dark:text-slate-300">
+                  Quizzes Taken
+                </p>
               </div>
             </CardContent>
           </Card>
