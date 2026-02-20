@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { X, Loader2, ChevronDown, ChevronUp, History, FolderOpen, FileCode, Keyboard, ArrowRight, Plus } from 'lucide-react';
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import IDESidebar from '../components/ide/IDESidebar';
 import FileExplorer from '../components/ide/FileExplorer';
 import CodeEditor from '../components/ide/CodeEditor';
@@ -26,9 +27,6 @@ export default function IDEPage() {
     const [project, setProject] = useState<any>(null);
     const [isLoadingProject, setIsLoadingProject] = useState(false);
     const [terminalOpen, setTerminalOpen] = useState(true);
-    const [terminalHeight, setTerminalHeight] = useState(220);
-    const isResizingRef = useRef(false);
-    const lastYRef = useRef(0);
 
     const effectiveProjectId = projectId || activeProjectId;
 
@@ -65,12 +63,10 @@ export default function IDEPage() {
     // Track recently opened files
     useEffect(() => {
         if (activeTabId) {
-            // Find the tab or file to get metadata
             const tab = openTabs.find(t => t.fileId === activeTabId);
             if (tab) {
                 addToRecentFiles({ _id: tab.fileId, name: tab.name, language: tab.language, path: '', content: tab.content, project: '' });
             }
-            // Save last opened file to backend
             if (effectiveProjectId) {
                 api.put(`/ide/projects/${effectiveProjectId}/state`, { lastOpenFileId: activeTabId })
                     .catch(e => console.error('Failed to save project state', e));
@@ -105,7 +101,6 @@ export default function IDEPage() {
         try {
             await api.delete(`/ide/projects/${effectiveProjectId}/files/${fileId}`);
             setFiles((prev) => prev.filter((f) => f._id !== fileId));
-            // Do NOT close the tab — keep content accessible in history until user closes it
         } catch (err) {
             console.error('Delete file failed', err);
         }
@@ -115,32 +110,11 @@ export default function IDEPage() {
         if (!effectiveProjectId) return;
         try {
             const { data } = await api.put(`/ide/projects/${effectiveProjectId}/files/${fileId}`, { name });
-            // Update the files list
             setFiles((prev) => prev.map((f) => f._id === fileId ? data.file : f));
-            // Update the open tab so name & language refreshes immediately
             renameTab(fileId, data.file.name, data.file.language);
         } catch (err) {
             console.error('Rename failed', err);
         }
-    };
-
-    // Resizable terminal
-    const handleTerminalMouseDown = (e: React.MouseEvent) => {
-        isResizingRef.current = true;
-        lastYRef.current = e.clientY;
-        document.addEventListener('mousemove', handleMouseMove);
-        document.addEventListener('mouseup', handleMouseUp);
-    };
-    const handleMouseMove = (e: MouseEvent) => {
-        if (!isResizingRef.current) return;
-        const delta = lastYRef.current - e.clientY;
-        lastYRef.current = e.clientY;
-        setTerminalHeight((h) => Math.max(100, Math.min(600, h + delta)));
-    };
-    const handleMouseUp = () => {
-        isResizingRef.current = false;
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
     };
 
     const activeTab = openTabs.find((t) => t.fileId === activeTabId);
@@ -148,176 +122,172 @@ export default function IDEPage() {
 
     const handleViewChange = (view: 'projects' | 'history') => {
         if (sidebarView === view) {
-            toggleSidebar(); // Toggle if clicking active view
+            toggleSidebar();
         } else {
             setSidebarView(view);
-            if (sidebarCollapsed) toggleSidebar(); // Open if closed
+            if (sidebarCollapsed) toggleSidebar();
         }
     };
 
     return (
         <div className="flex h-screen w-screen overflow-hidden bg-[#0f172a] text-white font-mono">
-            {/* Left icon sidebar */}
             <IDESidebar
                 activeView={sidebarView}
                 onViewChange={handleViewChange}
                 onClose={() => navigate('/chat')}
             />
 
-            {/* File Explorer */}
-            {!sidebarCollapsed && sidebarView === 'projects' && (
-                <div className="flex flex-col bg-[#0f172a] border-r border-[#1e293b]" style={{ width: 220, minWidth: 180, maxWidth: 320 }}>
-                    <div className="flex items-center justify-between px-4 py-2 bg-[#0d1425] border-b border-white/5">
-                        <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-indigo-400 truncate mr-2">
-                            {project ? project.name : 'EXPLORER'}
-                        </span>
-                        <button
-                            onClick={toggleSidebar}
-                            className="p-1 rounded-md hover:bg-white/5 text-slate-500 hover:text-white transition-all active:scale-95"
-                        >
-                            <X className="h-3.5 w-3.5" />
-                        </button>
-                    </div>
-                    <FileExplorer
-                        files={files}
-                        activeFileId={activeTabId}
-                        onOpenFile={openTab}
-                        onCreateFile={handleCreateFile}
-                        onDeleteFile={handleDeleteFile}
-                        onRenameFile={handleRenameFile}
-                    />
-                </div>
-            )}
-
-            {/* History panel (replaces file explorer when history is active) */}
-            {!sidebarCollapsed && sidebarView === 'history' && (
-                <div className="flex flex-col bg-[#0f172a] border-r border-[#1e293b]" style={{ width: 220, minWidth: 180, maxWidth: 320 }}>
-                    <div className="flex items-center justify-between px-3 py-2 border-b border-[#1e293b]">
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-                            <History className="h-3 w-3" /> History
-                        </span>
-                        <button
-                            onClick={toggleSidebar}
-                            className="p-1 rounded hover:bg-[#1e293b] text-slate-500 hover:text-white transition-colors"
-                        >
-                            <X className="h-3 w-3" />
-                        </button>
-                    </div>
-                    <div className="flex-1 overflow-y-auto">
-                        <HistoryPanel files={files} />
-                    </div>
-                </div>
-            )}
-
-            {/* Center: Editor + Terminal */}
-            <div className="flex flex-1 flex-col min-w-0 overflow-hidden bg-[#0f172a]">
-                {/* Tab bar */}
-                <div className="flex items-center border-b border-white/5 bg-[#0a0f1e]/80 backdrop-blur-md overflow-x-auto min-h-[44px] shrink-0 custom-scrollbar">
-                    {openTabs.length === 0 && (
-                        <div className="flex items-center gap-2 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-600 italic">
-                            No files active
-                        </div>
-                    )}
-                    {openTabs.map((tab) => (
-                        <button
-                            key={tab.fileId}
-                            onClick={() => setActiveTab(tab.fileId)}
-                            className={`flex items-center gap-2.5 px-5 py-2.5 text-[11px] font-bold border-r border-white/5 whitespace-nowrap transition-all group ${tab.fileId === activeTabId
-                                ? 'bg-[#0f172a] text-white border-t-2 border-t-indigo-500 shadow-[inset_0_1px_10px_rgba(99,102,241,0.05)]'
-                                : 'bg-transparent text-slate-400 hover:bg-white/[0.03] hover:text-slate-200'
-                                }`}
-                        >
-                            {tab.isUnsaved && <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)] animate-pulse" />}
-                            {tab.name}
-                            <span
-                                onClick={(e) => { e.stopPropagation(); closeTab(tab.fileId); }}
-                                className="ml-2 w-4 h-4 flex items-center justify-center rounded hover:bg-white/10 text-slate-500 hover:text-red-400 transition-all opacity-0 group-hover:opacity-100"
-                            >
-                                <X className="h-2.5 w-2.5" />
-                            </span>
-                        </button>
-                    ))}
-                    <div className="flex-1" />
-                    {/* Close IDE button */}
-                    <button
-                        onClick={() => navigate('/chat')}
-                        className="flex items-center gap-2 px-4 py-2.5 text-[10px] font-extrabold uppercase tracking-widest text-slate-500 hover:text-red-400 transition-all border-l border-white/5 shrink-0 bg-transparent active:scale-95"
-                        title="Close IDE"
-                    >
-                        <X className="h-3.5 w-3.5" />
-                        Close IDE
-                    </button>
-                </div>
-
-                {/* Editor area */}
-                <div className="flex-1 min-h-0 overflow-hidden bg-[#0f172a]">
-                    {isLoadingProject ? (
-                        <div className="flex h-full items-center justify-center bg-[#0f172a]">
-                            <Loader2 className="h-8 w-8 animate-spin text-[#6366f1]" />
-                        </div>
-                    ) : !effectiveProjectId ? (
-                        <NoProjectState />
-                    ) : !activeTab ? (
-                        <div className="flex h-full flex-col items-center justify-center text-slate-500 bg-[#0f172a]">
-                            <div className="text-5xl mb-4">📄</div>
-                            <p className="text-sm">Select a file from the explorer to start editing</p>
-                            <p className="text-xs text-slate-600 mt-2">or click <span className="text-[#6366f1]">+ New File</span> to create one</p>
-                        </div>
-                    ) : (
-                        <CodeEditor
-                            key={activeTab.fileId}
-                            fileId={activeTab.fileId}
-                            language={activeTab.language}
-                            content={activeTab.content}
-                            onChange={(content) => updateTabContent(activeTab.fileId, content)}
-                            onSave={(content) => handleSaveFile(activeTab.fileId, content)}
-                        />
-                    )}
-                </div>
-
-                {/* Terminal resize handle */}
-                {terminalOpen && (
-                    <div
-                        className="h-1 cursor-row-resize bg-[#1e293b] hover:bg-[#6366f1] transition-colors shrink-0"
-                        onMouseDown={handleTerminalMouseDown}
-                    />
+            <PanelGroup direction="horizontal">
+                {!sidebarCollapsed && (
+                    <>
+                        <Panel defaultSize={15} minSize={10} maxSize={30} className="flex flex-col border-r border-[#1e293b]">
+                            {sidebarView === 'projects' ? (
+                                <div className="flex flex-col h-full bg-[#0f172a]">
+                                    <div className="flex items-center justify-between px-4 py-2 bg-[#0d1425] border-b border-white/5">
+                                        <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-indigo-400 truncate mr-2">
+                                            {project ? project.name : 'EXPLORER'}
+                                        </span>
+                                        <button
+                                            onClick={toggleSidebar}
+                                            className="p-1 rounded-md hover:bg-white/5 text-slate-500 hover:text-white transition-all active:scale-95"
+                                        >
+                                            <X className="h-3.5 w-3.5" />
+                                        </button>
+                                    </div>
+                                    <FileExplorer
+                                        files={files}
+                                        activeFileId={activeTabId}
+                                        onOpenFile={openTab}
+                                        onCreateFile={handleCreateFile}
+                                        onDeleteFile={handleDeleteFile}
+                                        onRenameFile={handleRenameFile}
+                                    />
+                                </div>
+                            ) : (
+                                <div className="flex flex-col h-full bg-[#0f172a]">
+                                    <div className="flex items-center justify-between px-3 py-2 border-b border-[#1e293b]">
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                                            <History className="h-3 w-3" /> History
+                                        </span>
+                                        <button
+                                            onClick={toggleSidebar}
+                                            className="p-1 rounded hover:bg-[#1e293b] text-slate-500 hover:text-white transition-colors"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </div>
+                                    <div className="flex-1 overflow-y-auto">
+                                        <HistoryPanel files={files} />
+                                    </div>
+                                </div>
+                            )}
+                        </Panel>
+                        <PanelResizeHandle className="w-1 bg-[#1e293b] hover:bg-indigo-500 transition-colors" />
+                    </>
                 )}
 
-                {/* Terminal panel */}
-                <div
-                    style={{ height: terminalOpen ? terminalHeight : 36 }}
-                    className="border-t border-[#1e293b] flex flex-col shrink-0"
-                >
-                    <div className="flex items-center px-3 py-1 bg-[#0a0f1e] border-b border-[#1e293b] shrink-0">
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 flex-1">Terminal</span>
-                        <button
-                            onClick={() => setTerminalOpen((v) => !v)}
-                            className="p-1 text-slate-400 hover:text-white"
-                        >
-                            {terminalOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />}
-                        </button>
-                    </div>
-                    {terminalOpen && (
-                        <div className="flex-1 min-h-0 overflow-hidden">
-                            <Terminal activeFile={activeFile || null} />
-                        </div>
-                    )}
-                </div>
-            </div>
+                <Panel defaultSize={60} minSize={30}>
+                    <PanelGroup direction="vertical">
+                        <Panel defaultSize={75} minSize={20} className="flex flex-col min-w-0 overflow-hidden bg-[#0f172a]">
+                            <div className="flex items-center border-b border-white/5 bg-[#0a0f1e]/80 backdrop-blur-md overflow-x-auto min-h-[44px] shrink-0 custom-scrollbar">
+                                {openTabs.length === 0 && (
+                                    <div className="flex items-center gap-2 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-600 italic">
+                                        No files active
+                                    </div>
+                                )}
+                                {openTabs.map((tab) => (
+                                    <button
+                                        key={tab.fileId}
+                                        onClick={() => setActiveTab(tab.fileId)}
+                                        className={`flex items-center gap-2.5 px-5 py-2.5 text-[11px] font-bold border-r border-white/5 whitespace-nowrap transition-all group ${tab.fileId === activeTabId
+                                            ? 'bg-[#0f172a] text-white border-t-2 border-t-indigo-500 shadow-[inset_0_1px_10px_rgba(99,102,241,0.05)]'
+                                            : 'bg-transparent text-slate-400 hover:bg-white/[0.03] hover:text-slate-200'
+                                            }`}
+                                    >
+                                        {tab.isUnsaved && <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)] animate-pulse" />}
+                                        {tab.name}
+                                        <span
+                                            onClick={(e) => { e.stopPropagation(); closeTab(tab.fileId); }}
+                                            className="ml-2 w-4 h-4 flex items-center justify-center rounded hover:bg-white/10 text-slate-500 hover:text-red-400 transition-all opacity-0 group-hover:opacity-100"
+                                        >
+                                            <X className="h-2.5 w-2.5" />
+                                        </span>
+                                    </button>
+                                ))}
+                                <div className="flex-1" />
+                                <button
+                                    onClick={() => navigate('/chat')}
+                                    className="flex items-center gap-2 px-4 py-2.5 text-[10px] font-extrabold uppercase tracking-widest text-slate-500 hover:text-red-400 transition-all border-l border-white/5 shrink-0 bg-transparent active:scale-95"
+                                    title="Close IDE"
+                                >
+                                    <X className="h-3.5 w-3.5" />
+                                    Close IDE
+                                </button>
+                            </div>
 
-            {/* Right: AI Assistant */}
-            <div className="border-l border-[#1e293b] bg-[#0f172a]" style={{ width: 360, minWidth: 280 }}>
-                <AIAssistantPanel
-                    files={files}
-                    activeFile={activeFile || null}
-                    onSaveFile={handleSaveFile}
-                />
-            </div>
+                            <div className="flex-1 min-h-0 overflow-hidden bg-[#0f172a]">
+                                {isLoadingProject ? (
+                                    <div className="flex h-full items-center justify-center bg-[#0f172a]">
+                                        <Loader2 className="h-8 w-8 animate-spin text-[#6366f1]" />
+                                    </div>
+                                ) : !effectiveProjectId ? (
+                                    <NoProjectState />
+                                ) : !activeTab ? (
+                                    <div className="flex h-full flex-col items-center justify-center text-slate-500 bg-[#0f172a] p-10 text-center">
+                                        <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center mb-6 rotate-3">
+                                            <FileCode className="h-10 w-10 text-slate-700" />
+                                        </div>
+                                        <p className="text-sm font-bold text-slate-400 mb-1">No file selected</p>
+                                        <p className="text-xs text-slate-600">Select a file from the explorer or create a new one to start coding</p>
+                                    </div>
+                                ) : (
+                                    <CodeEditor
+                                        key={activeTab.fileId}
+                                        fileId={activeTab.fileId}
+                                        language={activeTab.language}
+                                        content={activeTab.content}
+                                        onChange={(content) => updateTabContent(activeTab.fileId, content)}
+                                        onSave={(content) => handleSaveFile(activeTab.fileId, content)}
+                                    />
+                                )}
+                            </div>
+                        </Panel>
+
+                        {terminalOpen && (
+                            <>
+                                <PanelResizeHandle className="h-1 bg-[#1e293b] hover:bg-indigo-500 transition-colors" />
+                                <Panel defaultSize={25} minSize={10} className="border-t border-[#1e293b] flex flex-col shrink-0">
+                                    <div className="flex items-center px-3 py-1 bg-[#0a0f1e] border-b border-[#1e293b] shrink-0">
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 flex-1">Terminal</span>
+                                        <button
+                                            onClick={() => setTerminalOpen(false)}
+                                            className="p-1 text-slate-400 hover:text-white"
+                                        >
+                                            <ChevronDown className="h-3.5 w-3.5" />
+                                        </button>
+                                    </div>
+                                    <div className="flex-1 min-h-0 overflow-hidden bg-black/20">
+                                        <Terminal activeFile={activeFile || null} />
+                                    </div>
+                                </Panel>
+                            </>
+                        )}
+                    </PanelGroup>
+                </Panel>
+
+                <PanelResizeHandle className="w-1 bg-[#1e293b] hover:bg-indigo-500 transition-colors" />
+
+                <Panel defaultSize={25} minSize={20} maxSize={40} className="border-l border-[#1e293b] bg-[#0f172a]">
+                    <AIAssistantPanel
+                        files={files}
+                        activeFile={activeFile || null}
+                        onSaveFile={handleSaveFile}
+                    />
+                </Panel>
+            </PanelGroup>
         </div>
     );
 }
-
-// ─── No-project landing ───────────────────────────────────────────────────────
 
 function NoProjectState() {
     const navigate = useNavigate();
@@ -365,7 +335,6 @@ function NoProjectState() {
 
     return (
         <div className="flex h-full flex-col items-center justify-center p-6 mesh-gradient-premium">
-            {/* Main Glass Card */}
             <div className="w-full max-w-2xl glass-premium rounded-3xl p-10 flex flex-col items-center shadow-2xl relative z-10">
                 <div className="mb-8 relative group">
                     <div className="absolute -inset-4 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full blur-xl opacity-20 group-hover:opacity-40 transition duration-1000"></div>
@@ -375,12 +344,11 @@ function NoProjectState() {
                 </div>
 
                 <h2 className="mb-3 text-3xl font-extrabold text-white tracking-tight">Welcome to AI Byte IDE</h2>
-                <p className="mb-10 text-base text-slate-300 max-w-md">
+                <p className="mb-10 text-base text-slate-300 max-w-md text-center">
                     The next-gen intelligent workspace. Create a project or pick up where you left off.
                 </p>
 
                 <div className="w-full max-w-lg space-y-8">
-                    {/* Create New Project Section */}
                     <div className="space-y-3">
                         <div className="flex gap-3">
                             <div className="relative flex-1 group">
@@ -405,10 +373,9 @@ function NoProjectState() {
                                 Create
                             </button>
                         </div>
-                        {error && <p className="text-xs text-red-400 px-2">{error}</p>}
+                        {error && <p className="text-xs text-red-400 px-2 text-center">{error}</p>}
                     </div>
 
-                    {/* Recent Projects Section */}
                     {projects.length > 0 && (
                         <div className="space-y-4 pt-4 border-t border-white/5">
                             <div className="flex items-center justify-between px-1">
@@ -439,15 +406,12 @@ function NoProjectState() {
                     )}
                 </div>
 
-                {/* Decorative Elements */}
                 <div className="absolute top-0 right-0 -mr-20 -mt-20 h-64 w-64 bg-indigo-600/10 rounded-full blur-[100px] pointer-events-none"></div>
                 <div className="absolute bottom-0 left-0 -ml-20 -mb-20 h-64 w-64 bg-purple-600/10 rounded-full blur-[100px] pointer-events-none"></div>
             </div>
         </div>
     );
 }
-
-// ─── History panel (sidebar) ─────────────────────────────────────────────────
 
 function HistoryPanel({ files }: { files: any[] }) {
     const { recentFiles, openTab, removeFromRecentFiles, openTabs, setActiveTab } = useIdeStore();
@@ -465,18 +429,14 @@ function HistoryPanel({ files }: { files: any[] }) {
     }
 
     const handleOpen = (entry: any) => {
-        // 1. File still exists → open normally
         const liveFile = files.find((f: any) => f._id === entry.id);
         if (liveFile) { openTab(liveFile); return; }
-        // 2. File was deleted but tab is still open → just switch to it
         const openTab_ = openTabs.find(t => t.fileId === entry.id);
         if (openTab_) { setActiveTab(entry.id); return; }
-        // 3. Tab was closed but we have cached content → re-open as orphaned tab
         if (entry.content !== undefined) {
             openTab({ _id: entry.id, name: entry.name, language: entry.language, content: entry.content, path: '', project: '' });
             return;
         }
-        // 4. No content available at all — nothing to do
         alert(`Content for "${entry.name}" is no longer available.`);
     };
 
@@ -526,4 +486,3 @@ function HistoryPanel({ files }: { files: any[] }) {
         </div>
     );
 }
-

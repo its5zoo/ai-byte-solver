@@ -12,7 +12,7 @@ import { tmpdir } from 'os';
 import jwt from 'jsonwebtoken';
 
 const ALLOWED_LANGUAGES = ['javascript', 'python', 'typescript', 'cpp', 'c', 'java'];
-const TIMEOUT_MS = 30000; // 30 second execution timeout
+const TIMEOUT_MS = 50000; // 50 second execution timeout
 
 export function initTerminalWs(httpServer) {
     const allowedOrigins = [

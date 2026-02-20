@@ -109,12 +109,20 @@ export default function FileExplorer({
         setTimeout(() => createInputRef.current?.focus(), 50);
     };
 
-    const commitCreate = () => {
-        if (newFileName.trim()) {
-            onCreateFile(newFileName.trim());
+    const commitCreate = async () => {
+        const name = newFileName.trim();
+        if (name) {
+            try {
+                await onCreateFile(name);
+                setIsCreating(false);
+                setNewFileName('');
+            } catch (err) {
+                // Keep creating open so user can try again or fix name
+            }
+        } else {
+            setIsCreating(false);
+            setNewFileName('');
         }
-        setIsCreating(false);
-        setNewFileName('');
     };
 
     return (

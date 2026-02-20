@@ -181,15 +181,23 @@ export default function AIAssistantPanel({ files, activeFile, onSaveFile }: AIAs
     }, [activeFile, files, handleSend, setAiMode]);
 
     const handleApplyPatch = (msgId: string, patch: string) => {
-        const tabId = useIdeStore.getState().activeTabId;
-        if (!tabId || !onSaveFile) return;
+        const { activeTabId, updateTabContent } = useIdeStore.getState();
+        if (!activeTabId || !patch) return;
 
         setPatchTargetId(msgId);
-        // In a real app we'd apply the diff. Here we simulate success.
+
+        // Extract code from backticks if present
+        let cleanPatch = patch;
+        const codeBlockRegex = /```[\s\S]*?\n([\s\S]*?)\n```/g;
+        const matches = [...patch.matchAll(codeBlockRegex)];
+        if (matches.length > 0) {
+            cleanPatch = matches[0][1];
+        }
+
         setTimeout(() => {
+            updateTabContent(activeTabId, cleanPatch);
             setPatchTargetId(null);
-            // Example: onSaveFile(tabId, newContent);
-        }, 1000);
+        }, 600);
     };
 
     const activeMode = MODES.find(m => m.id === aiMode);
