@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { X, Loader2, ChevronDown, ChevronUp, History, FolderOpen, FileCode, Keyboard, ArrowRight, Plus } from 'lucide-react';
+import { X, Loader2, ChevronDown, History, FolderOpen, FileCode, Keyboard, ArrowRight, Plus, Terminal as TerminalIcon } from 'lucide-react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
+import { cn } from '../lib/utils';
 import IDESidebar from '../components/ide/IDESidebar';
 import FileExplorer from '../components/ide/FileExplorer';
 import CodeEditor from '../components/ide/CodeEditor';
@@ -85,14 +86,32 @@ export default function IDEPage() {
         }
     };
 
-    const handleCreateFile = async (name: string) => {
-        if (!effectiveProjectId) return;
+    const ensureProject = async (): Promise<string | null> => {
+        if (effectiveProjectId) return effectiveProjectId;
         try {
-            const { data } = await api.post(`/ide/projects/${effectiveProjectId}/files`, { name });
-            setFiles((prev) => [...prev, data.file]);
+            const { data } = await api.post('/ide/projects', { name: 'Untitled Project' });
+            navigate(`/ide/${data.project._id}`);
+            return data.project._id;
+        } catch (err: any) {
+            console.error('Failed to auto-create project', err);
+            alert('Please create a project first before adding files.');
+            return null;
+        }
+    };
+
+    const handleCreateFile = async (name: string, content?: string) => {
+        const pId = await ensureProject();
+        if (!pId) return;
+        try {
+            const { data } = await api.post(`/ide/projects/${pId}/files`, { name, content });
+            setFiles((prev) => {
+                if (prev.some(f => f.name === data.file.name)) return prev;
+                return [...prev, data.file];
+            });
             openTab(data.file);
         } catch (err: any) {
             console.error('Create file failed', err?.response?.data?.error?.message || err.message);
+            alert(err?.response?.data?.error?.message || err.message);
         }
     };
 
@@ -188,8 +207,8 @@ export default function IDEPage() {
 
                 <Panel defaultSize={60} minSize={30}>
                     <PanelGroup direction="vertical">
-                        <Panel defaultSize={75} minSize={20} className="flex flex-col min-w-0 overflow-hidden bg-[#0f172a]">
-                            <div className="flex items-center border-b border-white/5 bg-[#0a0f1e]/80 backdrop-blur-md overflow-x-auto min-h-[44px] shrink-0 custom-scrollbar">
+                        <Panel defaultSize={75} minSize={20} className="flex flex-col min-w-0 overflow-hidden ide-bg mb-1 rounded-t-2xl border-t border-x ide-border">
+                            <div className="flex items-center border-b ide-border bg-[#0a0f1e]/80 backdrop-blur-md overflow-x-auto min-h-[44px] shrink-0 custom-scrollbar">
                                 {openTabs.length === 0 && (
                                     <div className="flex items-center gap-2 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-600 italic">
                                         No files active
@@ -199,10 +218,12 @@ export default function IDEPage() {
                                     <button
                                         key={tab.fileId}
                                         onClick={() => setActiveTab(tab.fileId)}
-                                        className={`flex items-center gap-2.5 px-5 py-2.5 text-[11px] font-bold border-r border-white/5 whitespace-nowrap transition-all group ${tab.fileId === activeTabId
-                                            ? 'bg-[#0f172a] text-white border-t-2 border-t-indigo-500 shadow-[inset_0_1px_10px_rgba(99,102,241,0.05)]'
-                                            : 'bg-transparent text-slate-400 hover:bg-white/[0.03] hover:text-slate-200'
-                                            }`}
+                                        className={cn(
+                                            "flex items-center gap-2.5 px-5 py-2.5 text-[11px] font-bold border-r ide-border whitespace-nowrap transition-all group",
+                                            tab.fileId === activeTabId
+                                                ? "bg-[#0f172a] text-white border-t-2 border-t-indigo-500 shadow-[inset_0_1px_10px_rgba(99,102,241,0.05)]"
+                                                : "bg-transparent text-slate-400 hover:bg-white/[0.03] hover:text-slate-200"
+                                        )}
                                     >
                                         {tab.isUnsaved && <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)] animate-pulse" />}
                                         {tab.name}
@@ -215,9 +236,23 @@ export default function IDEPage() {
                                     </button>
                                 ))}
                                 <div className="flex-1" />
+
+                                {/* Terminal Toggle */}
+                                <button
+                                    onClick={() => setTerminalOpen(!terminalOpen)}
+                                    className={cn(
+                                        "flex items-center gap-2 px-4 py-2.5 text-[10px] font-extrabold uppercase tracking-widest transition-all border-l ide-border shrink-0 bg-transparent active:scale-95",
+                                        terminalOpen ? "text-indigo-400 bg-indigo-500/5 shadow-[inset_0_-2px_0_rgba(99,102,241,1)]" : "text-slate-500 hover:text-slate-300"
+                                    )}
+                                    title={terminalOpen ? "Hide Terminal" : "Show Terminal"}
+                                >
+                                    <TerminalIcon className="h-3.5 w-3.5" />
+                                    Terminal
+                                </button>
+
                                 <button
                                     onClick={() => navigate('/chat')}
-                                    className="flex items-center gap-2 px-4 py-2.5 text-[10px] font-extrabold uppercase tracking-widest text-slate-500 hover:text-red-400 transition-all border-l border-white/5 shrink-0 bg-transparent active:scale-95"
+                                    className="flex items-center gap-2 px-4 py-2.5 text-[10px] font-extrabold uppercase tracking-widest text-slate-500 hover:text-red-400 transition-all border-l ide-border shrink-0 bg-transparent active:scale-95"
                                     title="Close IDE"
                                 >
                                     <X className="h-3.5 w-3.5" />
@@ -281,11 +316,11 @@ export default function IDEPage() {
                     <AIAssistantPanel
                         files={files}
                         activeFile={activeFile || null}
-                        onSaveFile={handleSaveFile}
+                        onCreateFile={handleCreateFile}
                     />
                 </Panel>
-            </PanelGroup>
-        </div>
+            </PanelGroup >
+        </div >
     );
 }
 

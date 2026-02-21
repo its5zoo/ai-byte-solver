@@ -1,0 +1,318 @@
+{
+    "jee-main": [
+        {
+            "text": "A block of mass 10 kg is placed on a rough inclined plane as shown in the figure below. If the angle of inclination is 30° and the coefficient of static friction is 0.2, what is the minimum force required to keep it in equilibrium?\n\n![Inclined Plane](https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Inclined_plane_1.svg/300px-Inclined_plane_1.svg.png)",
+            "options": [
+                "49 N",
+                "32 N",
+                "98 N",
+                "100 N"
+            ],
+            "correctAnswerIndex": 1,
+            "difficulty": "hard",
+            "explanation": "Calculated by resolving the gravitational force \\( mg\\sin(\\theta) \\) and subtracting frictional force \\( \\mu mg\\cos(\\theta) \\). PYQ from JEE Main 2021.",
+            "topic": "Laws of Motion",
+            "subject": "Physics"
+        },
+        {
+            "text": "What does this logic gate circuit represent?\n\n![Logic Gate](https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/NAND_ANSI_Labelled.svg/200px-NAND_ANSI_Labelled.svg.png)",
+            "options": [
+                "AND Gate",
+                "OR Gate",
+                "NAND Gate",
+                "NOR Gate"
+            ],
+            "correctAnswerIndex": 2,
+            "difficulty": "easy",
+            "explanation": "The diagram displays a standard NAND gate symbol, which outputs false only if both inputs are true.",
+            "topic": "Semiconductors",
+            "subject": "Physics"
+        },
+        {
+            "text": "Find the integral of \\( e^x (\\sin x + \\cos x) \\, dx \\).",
+            "options": [
+                "\\( e^x \\sin x + C \\)",
+                "\\( e^x \\cos x + C \\)",
+                "\\( e^x (\\sin x - \\cos x) + C \\)",
+                "\\( e^{2x} + C \\)"
+            ],
+            "correctAnswerIndex": 0,
+            "difficulty": "medium",
+            "explanation": "This follows the standard integral rule \\( \\int e^x (f(x) + f'(x)) dx = e^x f(x) + C \\), where \\( f(x) = \\sin x \\). PYQ 2018.",
+            "topic": "Integration",
+            "subject": "Mathematics"
+        },
+        {
+            "text": "In a Young's Double Slit Experiment, what happens to the fringe width if the whole apparatus is immersed in water?",
+            "options": [
+                "Increases",
+                "Decreases",
+                "Remains unchanged",
+                "Becomes infinite"
+            ],
+            "correctAnswerIndex": 1,
+            "difficulty": "medium",
+            "explanation": "Wavelength of light decreases in water (refractive index > 1). Since Fringe Width \\( \\beta = \\frac{\\lambda D}{d} \\), it decreases.",
+            "topic": "Wave Optics",
+            "subject": "Physics"
+        },
+        {
+            "text": "Identify the reaction intermediate in this electrophilic aromatic substitution.\n\n![Benzene Mechanism](https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Electrophilic_aromatic_substitution_mechanism.png/500px-Electrophilic_aromatic_substitution_mechanism.png)",
+            "options": [
+                "Carbene",
+                "Free Radical",
+                "Arenium Ion (Sigma Complex)",
+                "Carbanion"
+            ],
+            "correctAnswerIndex": 2,
+            "difficulty": "medium",
+            "explanation": "The intermediate is a resonance-stabilized carbocation known as the Arenium ion or Wheland intermediate.",
+            "topic": "Organic Chemistry",
+            "subject": "Chemistry"
+        },
+        {
+            "text": "Which of the following compounds has the highest dipole moment?",
+            "options": [
+                "\\( CH_3Cl \\)",
+                "\\( CH_2Cl_2 \\)",
+                "\\( CHCl_3 \\)",
+                "\\( CCl_4 \\)"
+            ],
+            "correctAnswerIndex": 0,
+            "difficulty": "hard",
+            "explanation": "Due to vector addition of dipole moments and bond length variations, \\( CH_3Cl \\) actually has a slightly higher net dipole moment than \\( CH_2Cl_2 \\).",
+            "topic": "Chemical Bonding",
+            "subject": "Chemistry"
+        }
+    ],
+    "neet": [
+        {
+            "text": "Identify the labeled structure 'X' in the given diagram of the human heart.\n\n![Human Heart](https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Diagram_of_the_human_heart_%28cropped%29.svg/300px-Diagram_of_the_human_heart_%28cropped%29.svg.png)",
+            "options": [
+                "Right Atrium",
+                "Aorta",
+                "Pulmonary Artery",
+                "Left Ventricle"
+            ],
+            "correctAnswerIndex": 1,
+            "difficulty": "easy",
+            "explanation": "The large arching vessel at the top is the Aorta, carrying oxygenated blood to the body. NEET 2019 PYQ.",
+            "topic": "Body Fluids and Circulation",
+            "subject": "Zoology"
+        },
+        {
+            "text": "Which of the following correctly pairs the cell organelle with its function?",
+            "options": [
+                "Mitochondria - Protein Synthesis",
+                "Lysosome - ATP Production",
+                "Golgi Apparatus - Packaging and Secretion",
+                "Ribosome - Lipid Synthesis"
+            ],
+            "correctAnswerIndex": 2,
+            "difficulty": "medium",
+            "explanation": "The Golgi apparatus is principally responsible for packaging proteins into vesicles prior to secretion.",
+            "topic": "Cell Biology",
+            "subject": "Botany"
+        },
+        {
+            "text": "A wire of resistance 4 \\( \\Omega \\) is stretched to twice its original length. The resistance of stretched wire would be:",
+            "options": [
+                "2 \\( \\Omega \\)",
+                "4 \\( \\Omega \\)",
+                "8 \\( \\Omega \\)",
+                "16 \\( \\Omega \\)"
+            ],
+            "correctAnswerIndex": 3,
+            "difficulty": "medium",
+            "explanation": "When length is doubled, area halves to conserve volume. \\( R' = \\rho \\frac{2l}{A/2} = 4R = 4 \\times 4 = 16 \\Omega \\).",
+            "topic": "Current Electricity",
+            "subject": "Physics"
+        },
+        {
+            "text": "In a typical Mendelian dihybrid cross, the phenotypic ratio in the F2 generation is:",
+            "options": [
+                "3:1",
+                "1:2:1",
+                "9:3:3:1",
+                "1:1:1:1"
+            ],
+            "correctAnswerIndex": 2,
+            "difficulty": "easy",
+            "explanation": "A dihybrid cross between two heterozygotes yields a 9:3:3:1 phenotypic ratio.",
+            "topic": "Genetics",
+            "subject": "Zoology"
+        },
+        {
+            "text": "What is the primary function of the enzyme DNA ligase during DNA replication?",
+            "options": [
+                "Unwinding the double helix",
+                "Synthesizing RNA primers",
+                "Joining Okazaki fragments",
+                "Proofreading newly synthesized DNA"
+            ],
+            "correctAnswerIndex": 2,
+            "difficulty": "medium",
+            "explanation": "DNA ligase facilitates the joining of DNA strands together by catalyzing the formation of a phosphodiester bond, critical for lagging strand synthesis.",
+            "topic": "Molecular Basis of Inheritance",
+            "subject": "Botany"
+        },
+        {
+            "text": "Identify the structure.\n\n![DNA](https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/DNA_chemical_structure.svg/300px-DNA_chemical_structure.svg.png)",
+            "options": [
+                "Polypeptide chain",
+                "Polysaccharide",
+                "Polynucleotide chain (DNA)",
+                "Triglyceride"
+            ],
+            "correctAnswerIndex": 2,
+            "difficulty": "easy",
+            "explanation": "The image shows the chemical structure of DNA, featuring the sugar-phosphate backbone and nitrogenous bases.",
+            "topic": "Biomolecules",
+            "subject": "Chemistry"
+        }
+    ],
+    "upsc": [
+        {
+            "text": "With reference to the cultural history of India, consider the following structural elements of a Buddhist Stupa.\n\n![Stupa](https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Sanchi_Stupa_1_diagram.svg/400px-Sanchi_Stupa_1_diagram.svg.png)\n\nWhat is the top umbrella-like structure called?",
+            "options": [
+                "Harmika",
+                "Anda",
+                "Chattra",
+                "Vedika"
+            ],
+            "correctAnswerIndex": 2,
+            "difficulty": "medium",
+            "explanation": "The Chattra (umbrella) represents the Three Jewels of Buddhism and implies royalty and protection.",
+            "topic": "Art & Culture",
+            "subject": "History"
+        },
+        {
+            "text": "Who among the following was the founder of the 'Satya Shodhak Samaj'?",
+            "options": [
+                "B.R. Ambedkar",
+                "Jyotirao Phule",
+                "Narayan Guru",
+                "Periyar E. V. Ramasamy"
+            ],
+            "correctAnswerIndex": 1,
+            "difficulty": "easy",
+            "explanation": "Jyotirao Phule founded the Satyashodhak Samaj in 1873 in Pune, Maharashtra, to liberate untouchables and low castes from Brahminical oppression.",
+            "topic": "Modern Indian History",
+            "subject": "History"
+        },
+        {
+            "text": "Which of the following is NOT a fundamental right under the Constitution of India?",
+            "options": [
+                "Right to Equality",
+                "Right to Property",
+                "Right against Exploitation",
+                "Right to Freedom of Religion"
+            ],
+            "correctAnswerIndex": 1,
+            "difficulty": "easy",
+            "explanation": "The Right to Property was deleted from the list of Fundamental Rights by the 44th Amendment Act, 1978, and made a legal right under Article 300A.",
+            "topic": "Indian Polity",
+            "subject": "Polity"
+        },
+        {
+            "text": "Consider the following map of India showing major ocean currents.\n\n![Ocean Currents](https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Ocean_currents_1943_%28borderless%293.png/400px-Ocean_currents_1943_%28borderless%293.png)\n\nWhich current heavily influences the Indian Monsoon?",
+            "options": [
+                "Agulhas Current",
+                "Somali Current",
+                "Benguela Current",
+                "Kuroshio Current"
+            ],
+            "correctAnswerIndex": 1,
+            "difficulty": "hard",
+            "explanation": "The Somali Current is an ocean boundary current that reverses its direction with the monsoons.",
+            "topic": "Geography",
+            "subject": "Geography"
+        },
+        {
+            "text": "The 'Global Competitiveness Report' is published by the:",
+            "options": [
+                "International Monetary Fund",
+                "United Nations Conference on Trade and Development",
+                "World Economic Forum",
+                "World Bank"
+            ],
+            "correctAnswerIndex": 2,
+            "difficulty": "medium",
+            "explanation": "The Global Competitiveness Report is a yearly report published by the World Economic Forum (WEF).",
+            "topic": "Economy",
+            "subject": "Economy"
+        }
+    ],
+    "gate": [
+        {
+            "text": "Consider the following directed graph.\n\n![Graph](https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Directed_graph_no_background.svg/200px-Directed_graph_no_background.svg.png)\n\nWhat is the minimum number of edges that must be added to make it strongly connected?",
+            "options": [
+                "1",
+                "2",
+                "3",
+                "0"
+            ],
+            "correctAnswerIndex": 1,
+            "difficulty": "hard",
+            "explanation": "A graph is strongly connected if there is a path from every vertex to every other vertex. 2 edges must be added to close the necessary cycles. GATE CSE PYQ.",
+            "topic": "Data Structures & Algorithms",
+            "subject": "Core Subject"
+        },
+        {
+            "text": "In a relational database, a set of attributes is called a 'Super Key' if:",
+            "options": [
+                "It uniquely identifies a tuple",
+                "It does not contain any redundant attributes",
+                "It is minimal",
+                "All of the above"
+            ],
+            "correctAnswerIndex": 0,
+            "difficulty": "easy",
+            "explanation": "A super key is simply any set of attributes that can uniquely identify a tuple. It is a 'Candidate Key' only if it is minimal.",
+            "topic": "Database Management Systems",
+            "subject": "Core Subject"
+        },
+        {
+            "text": "Which of the following scheduling algorithms can lead to starvation?",
+            "options": [
+                "Round Robin",
+                "Shortest Job First (SJF)",
+                "First Come First Serve",
+                "Both SJF and Priority Scheduling"
+            ],
+            "correctAnswerIndex": 3,
+            "difficulty": "medium",
+            "explanation": "SJF and Priority Scheduling can both cause starvation if shorter/higher-priority jobs keep arriving indefinitely.",
+            "topic": "Operating Systems",
+            "subject": "Core Subject"
+        },
+        {
+            "text": "Find the steady-state error for a step input in the given control system block diagram.\n\n![Control System](https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Feedback_loop_with_blocks.svg/300px-Feedback_loop_with_blocks.svg.png)",
+            "options": [
+                "0",
+                "Infinity",
+                "Depends on K",
+                "1"
+            ],
+            "correctAnswerIndex": 0,
+            "difficulty": "hard",
+            "explanation": "For a Type 1 system with a step input, the steady-state error is zero. Gate EE PYQ.",
+            "topic": "Control Systems",
+            "subject": "Core Subject"
+        },
+        {
+            "text": "Let \\( V \\) be a vector space over \\( R \\) and \\( T: V \\to V \\) be a linear transformation whose characteristic polynomial is \\( x^2(x-1) \\). The dimension of \\( V \\) is:",
+            "options": [
+                "1",
+                "2",
+                "3",
+                "Cannot be determined"
+            ],
+            "correctAnswerIndex": 2,
+            "difficulty": "medium",
+            "explanation": "The degree of the characteristic polynomial corresponds to the dimension of the vector space. The degree of \\( x^2(x-1) = x^3 - x^2 \\) is 3.",
+            "topic": "Engineering Mathematics",
+            "subject": "Engineering Mathematics"
+        }
+    ]
+}

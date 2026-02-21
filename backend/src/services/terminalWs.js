@@ -100,8 +100,21 @@ export function initTerminalWs(httpServer) {
             const tempId = `run_${Date.now()}`;
             const tempFile = join(sandboxDir, `${tempId}.${ext}`);
 
+            let processedContent = content;
+
+            // Fix interactive stdout buffering for C/C++ by injecting setvbuf
+            if (language === 'c' || language === 'cpp') {
+                if (!processedContent.includes('<stdio.h>')) {
+                    processedContent = '#include <stdio.h>\n' + processedContent;
+                }
+                const mainRegex = /(int|void)\s+main\s*\([^)]*\)\s*[\r\n\s]*\{/;
+                if (mainRegex.test(processedContent)) {
+                    processedContent = processedContent.replace(mainRegex, "$&\n    setvbuf(stdout, NULL, _IONBF, 0);\n");
+                }
+            }
+
             try {
-                writeFileSync(tempFile, content, 'utf-8');
+                writeFileSync(tempFile, processedContent, 'utf-8');
             } catch (err) {
                 socket.emit('output', { type: 'error', data: `Failed to write temp file: ${err.message}\n` });
                 return;
@@ -126,7 +139,7 @@ export function initTerminalWs(httpServer) {
                 const fullCmd = `javac "${tempFile}" && java -cp "${sandboxDir}" ${tempId}`;
                 runProcess(socket, 'powershell', ['-Command', fullCmd], tempFile, language, content);
             } else if (language === 'python') {
-                runProcess(socket, 'python', [tempFile], tempFile, language, content);
+                runProcess(socket, 'python', ['-u', tempFile], tempFile, language, content);
             } else {
                 // javascript / typescript
                 runProcess(socket, 'node', [tempFile], tempFile, language, content);

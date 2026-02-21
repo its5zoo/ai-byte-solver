@@ -23,6 +23,7 @@ router.get('/sessions', chatController.listSessions);
 router.get('/sessions/:id', chatController.getSession);
 router.patch('/sessions/:id', chatController.updateSession);
 router.delete('/sessions/:id', chatController.deleteSession);
+router.patch('/sessions/:id/bookmark', chatController.toggleBookmark);
 router.post(
   '/sessions/:id/messages',
   [body('content').trim().notEmpty().withMessage('Content required')],

@@ -34,10 +34,10 @@ interface ChatPanelProps {
   isLoading?: boolean;
   error?: string | null;
   onDismissError?: () => void;
-  mode: 'syllabus' | 'open';
+  mode: 'syllabus' | 'open' | 'pyq';
   pdfs: PDF[];
-  attachedPdfId?: string | null;
-  onClearPdf?: () => void;
+  attachedPdfIds?: string[];
+  onClearPdf?: (pdfId: string) => void;
 }
 
 export default function ChatPanel({
@@ -48,7 +48,7 @@ export default function ChatPanel({
   error,
   onDismissError,
   pdfs,
-  attachedPdfId,
+  attachedPdfIds = [],
   onClearPdf,
 }: ChatPanelProps) {
   const { theme } = useThemeStore();
@@ -87,7 +87,9 @@ export default function ChatPanel({
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
 
     try {
-      await onSend(toSend, attachedPdfId || undefined);
+      // Pass the first attached PDF ID for backward compatibility in the `onSend` signature,
+      // but the backend will use the whole array via the session state.
+      await onSend(toSend, attachedPdfIds[0] || undefined);
     } catch (_) {
       // Error shown via parent error state
     }
@@ -101,8 +103,8 @@ export default function ChatPanel({
 
   const showWelcome = messages.length === 0;
 
-  // Find selected PDF name
-  const selectedPdf = pdfs.find(p => p._id === attachedPdfId);
+  // Find selected PDF names
+  const selectedPdfs = pdfs.filter(p => attachedPdfIds.includes(p._id));
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[hsl(var(--background)/0.5)] transition-colors">
@@ -143,8 +145,8 @@ export default function ChatPanel({
 
               <div className="flex flex-col items-center justify-center gap-2">
                 <p className="text-sm font-medium text-[hsl(var(--foreground-tertiary))]">
-                  {selectedPdf
-                    ? `Using: ${selectedPdf.originalName}`
+                  {selectedPdfs.length > 0
+                    ? `Using ${selectedPdfs.length} attached document(s)`
                     : 'Upload your file to solve your doubts'
                   }
                 </p>
@@ -166,11 +168,20 @@ export default function ChatPanel({
               </div>
             ))}
             {isLoading && (
-              <div className="flex justify-start animate-pulse">
-                <div className="flex items-center gap-2 rounded-2xl rounded-bl-none bg-slate-100 px-5 py-3 dark:bg-slate-800">
-                  <div className="h-2 w-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="h-2 w-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="h-2 w-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+              <div className="flex justify-start animate-fade-in-up">
+                <div className="flex items-center gap-3 rounded-2xl rounded-bl-none glass-elevated px-5 py-3 border border-violet-500/20 shadow-lg shadow-violet-500/5">
+                  <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/30">
+                    <Sparkles className="h-4 w-4 text-violet-600 dark:text-violet-400 animate-pulse" />
+                    <div className="absolute inset-0 animate-ping rounded-full bg-violet-400 opacity-20"></div>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-bold text-slate-900 dark:text-white">Byte AI is thinking</span>
+                    <div className="flex gap-1 mt-0.5">
+                      <div className="h-1 w-1 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <div className="h-1 w-1 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <div className="h-1 w-1 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -183,21 +194,26 @@ export default function ChatPanel({
       <div className="glass-elevated border-t border-[hsl(var(--glass-border))] px-4 py-4">
         <div className="mx-auto max-w-3xl space-y-3">
 
-          {/* Selected PDF Badge */}
-          {attachedPdfId && (
-            <div className="flex items-center gap-2 text-xs font-medium text-violet-600 dark:text-violet-400 px-1 animate-fade-in-down">
-              <span className="flex items-center gap-1.5 bg-violet-50 dark:bg-violet-900/20 px-2 py-1 rounded-md border border-violet-100 dark:border-violet-800">
-                <FileText className="h-3 w-3" />
-                Using: {selectedPdf?.originalName || 'Selected PDF'}
-                {onClearPdf && (
-                  <button
-                    onClick={onClearPdf}
-                    className="ml-1 hover:text-red-500"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                )}
-              </span>
+          {/* Selected PDF Badges */}
+          {selectedPdfs.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-violet-600 dark:text-violet-400 px-1 animate-fade-in-down">
+              {selectedPdfs.map(pdf => (
+                <span key={pdf._id} className="flex items-center gap-1.5 bg-violet-50 dark:bg-violet-900/20 px-2 py-1 rounded-md border border-violet-100 dark:border-violet-800">
+                  <FileText className="h-3 w-3 shrink-0" />
+                  <span className="truncate max-w-[150px]" title={pdf.originalName}>
+                    Using: {pdf.originalName}
+                  </span>
+                  {onClearPdf && (
+                    <button
+                      onClick={() => onClearPdf(pdf._id)}
+                      className="ml-1 shrink-0 hover:text-red-500 transition-colors"
+                      title="Remove PDF"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                </span>
+              ))}
             </div>
           )}
 
@@ -230,6 +246,22 @@ export default function ChatPanel({
                   ✨ Explain Simply
                 </button>
               )}
+            </div>
+          )}
+
+          {/* PYQ Analysis Action (available anytime PDFs are attached) */}
+          {selectedPdfs.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  handleSubmit(undefined, "Analyze the attached PDFs for Repeated Questions, Important Questions, and Diagram-Based Questions.");
+                }}
+                className="animate-fade-in-up rounded-full px-4 py-2 text-sm font-medium transition-all bg-indigo-100 text-indigo-800 border border-indigo-200 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800 dark:hover:bg-indigo-900/50 shadow-sm shadow-indigo-500/20"
+                title="Extract PYQs, Important Questions, and Diagrams"
+              >
+                📊 Analyze PYQs
+              </button>
             </div>
           )}
 

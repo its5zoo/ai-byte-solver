@@ -26,12 +26,12 @@ const updateDailyStats = async (userId, doubtsDelta = 1, timeDelta = 0, topics =
 
 export const createSession = async (req, res, next) => {
   try {
-    const { title, mode, pdfId } = req.body;
+    const { title, mode, pdfIds } = req.body;
     const session = await ChatSession.create({
       userId: req.user.id,
       title: title || 'New Chat',
       mode: mode || 'syllabus',
-      pdfId: pdfId || null,
+      pdfIds: Array.isArray(pdfIds) ? pdfIds : (pdfIds ? [pdfIds] : []),
       aiProvider: 'ollama',
     });
     res.status(201).json({ success: true, session });
@@ -51,13 +51,30 @@ export const listSessions = async (req, res, next) => {
   }
 };
 
+export const toggleBookmark = async (req, res, next) => {
+  try {
+    const session = await ChatSession.findOne({
+      _id: req.params.id,
+      userId: req.user.id,
+    });
+    if (!session) return next(new AppError('Session not found', 404));
+
+    session.isBookmarked = !session.isBookmarked;
+    await session.save();
+
+    res.json({ success: true, isBookmarked: session.isBookmarked, session });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const getSession = async (req, res, next) => {
   try {
     const session = await ChatSession.findOne({
       _id: req.params.id,
       userId: req.user.id,
     })
-      .populate('pdfId', 'originalName')
+      .populate('pdfIds', 'originalName')
       .lean();
 
     if (!session) throw new AppError('Session not found', 404, 'NOT_FOUND');
@@ -75,14 +92,16 @@ export const getSession = async (req, res, next) => {
 export const updateSession = async (req, res, next) => {
   try {
     const allowed = {};
-    if (req.body.mode && ['syllabus', 'open'].includes(req.body.mode)) allowed.mode = req.body.mode;
-    if (req.body.pdfId !== undefined) allowed.pdfId = req.body.pdfId || null;
+    if (req.body.mode && ['syllabus', 'open', 'pyq'].includes(req.body.mode)) allowed.mode = req.body.mode;
+    if (req.body.pdfIds !== undefined) {
+      allowed.pdfIds = Array.isArray(req.body.pdfIds) ? req.body.pdfIds : (req.body.pdfIds ? [req.body.pdfIds] : []);
+    }
     const session = await ChatSession.findOneAndUpdate(
       { _id: req.params.id, userId: req.user.id },
       { $set: allowed },
       { new: true }
     )
-      .populate('pdfId', 'originalName')
+      .populate('pdfIds', 'originalName')
       .lean();
     if (!session) throw new AppError('Session not found', 404, 'NOT_FOUND');
     res.json({ success: true, session });
@@ -134,7 +153,7 @@ export const sendMessage = async (req, res, next) => {
       res.setHeader('Connection', 'keep-alive');
       res.flushHeaders();
 
-      const stream = getAIResponse(messages, session.mode, session.pdfId);
+      const stream = getAIResponse(messages, session.mode, session.pdfIds);
 
       let fullContent = '';
       for await (const chunk of stream) {
@@ -168,7 +187,7 @@ export const sendMessage = async (req, res, next) => {
       res.write(`data: ${JSON.stringify({ done: true, messageId: aiMsg._id, topic: inferredTopic })}\n\n`);
       res.end();
     } else {
-      const aiContent = await getAIResponseNonStream(messages, session.mode, session.pdfId);
+      const aiContent = await getAIResponseNonStream(messages, session.mode, session.pdfIds);
 
       const aiMsg = await ChatMessage.create({
         sessionId,

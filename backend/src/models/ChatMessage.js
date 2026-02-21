@@ -16,6 +16,9 @@ const chatMessageSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    model: {
+      type: String,
+    },
     difficulty: {
       type: String,
       enum: ['easy', 'medium', 'hard'],

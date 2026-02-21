@@ -31,7 +31,12 @@ const ideFileSchema = new mongoose.Schema(
         },
         language: {
             type: String,
-            enum: ['javascript', 'typescript', 'python', 'cpp', 'java', 'html', 'css', 'json', 'markdown', 'text', 'other'],
+            enum: [
+                'javascript', 'typescript', 'python', 'cpp', 'c', 'csharp',
+                'java', 'html', 'css', 'scss', 'json', 'markdown',
+                'shell', 'yaml', 'xml', 'sql', 'rust', 'go',
+                'ruby', 'php', 'swift', 'kotlin', 'text', 'other'
+            ],
             default: 'javascript',
         },
         isUnsaved: {

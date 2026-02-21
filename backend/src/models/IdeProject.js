@@ -21,7 +21,12 @@ const ideProjectSchema = new mongoose.Schema(
         },
         language: {
             type: String,
-            enum: ['javascript', 'typescript', 'python', 'cpp', 'java', 'html', 'css', 'other'],
+            enum: [
+                'javascript', 'typescript', 'python', 'cpp', 'c', 'csharp',
+                'java', 'html', 'css', 'scss', 'json', 'markdown',
+                'shell', 'yaml', 'xml', 'sql', 'rust', 'go',
+                'ruby', 'php', 'swift', 'kotlin', 'text', 'other'
+            ],
             default: 'javascript',
         },
         lastOpenFileId: {
@@ -29,18 +34,11 @@ const ideProjectSchema = new mongoose.Schema(
             ref: 'IdeFile',
         },
         sessions: {
-            chat: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: 'ChatSession',
-            },
-            fix: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: 'ChatSession',
-            },
-            optimize: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: 'ChatSession',
-            },
+            chat: { type: mongoose.Schema.Types.ObjectId, ref: 'ChatSession' },
+            fix: { type: mongoose.Schema.Types.ObjectId, ref: 'ChatSession' },
+            optimize: { type: mongoose.Schema.Types.ObjectId, ref: 'ChatSession' },
+            explain: { type: mongoose.Schema.Types.ObjectId, ref: 'ChatSession' },
+            feature: { type: mongoose.Schema.Types.ObjectId, ref: 'ChatSession' },
         },
     },
     { timestamps: true }

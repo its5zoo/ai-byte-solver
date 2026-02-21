@@ -12,7 +12,7 @@ interface Session {
   title: string;
   mode: 'syllabus' | 'open';
   lastMessageAt?: string;
-  pdfId?: string | { _id: string; originalName: string } | null;
+  pdfIds?: string[] | { _id: string; originalName: string }[] | null;
 }
 
 interface Message {
@@ -34,7 +34,7 @@ export default function Dashboard() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
   const [pdfs, setPdfs] = useState<PDF[]>([]);
-  const [pendingPdfId, setPendingPdfId] = useState<string | null>(null);
+  const [pendingPdfIds, setPendingPdfIds] = useState<string[]>([]);
   const [summary, setSummary] = useState<Record<string, unknown> | null>(null);
   const [streak, setStreak] = useState<Record<string, unknown> | null>(null);
   const [timeline, setTimeline] = useState<{ date: string; doubtsSolved: number; studyTimeMinutes: number }[]>([]);
@@ -109,11 +109,11 @@ export default function Dashboard() {
       setIsLoading(true);
       setChatError(null);
       try {
-        const selectedPdfId = pdfId || pendingPdfId || null;
+        const selectedPdfIds = pendingPdfIds.length > 0 ? pendingPdfIds : (pdfId ? [pdfId] : []);
         const { data } = await api.post('/chat/sessions', {
           title: 'New Chat',
           mode: defaultMode,
-          pdfId: selectedPdfId,
+          pdfIds: selectedPdfIds,
         });
         const newId = data?.session?._id;
         if (!newId) throw new Error('No session ID returned');
@@ -125,7 +125,7 @@ export default function Dashboard() {
         setMessages([userMsgRes, aiMsgRes]);
         justCreatedSessionIdRef.current = newId;
         navigate(`/chat/${newId}`);
-        setPendingPdfId(null);
+        setPendingPdfIds([]);
         setChatError(null);
         fetchStats();
       } catch (err: unknown) {
@@ -158,6 +158,17 @@ export default function Dashboard() {
       setChatError(msg || 'AI is unavailable. Is Ollama running? Check RUN.md.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleToggleBookmark = async (id: string) => {
+    try {
+      const { data } = await api.patch(`/chat/sessions/${id}/bookmark`);
+      setSessions((prev) =>
+        prev.map((s) => (s._id === id ? { ...s, isBookmarked: data.isBookmarked } : s))
+      );
+    } catch (_) {
+      // ignore
     }
   };
 
@@ -194,24 +205,46 @@ export default function Dashboard() {
 
   const handleAttachPdf = async (pdfId: string) => {
     if (!sessionId) {
-      setPendingPdfId(pdfId);
+      setPendingPdfIds((prev) => prev.includes(pdfId) ? prev : [...prev, pdfId]);
       return;
     }
+
+    // Get current IDs
+    const currentIds = currentSession?.pdfIds
+      ? (Array.isArray(currentSession.pdfIds)
+        ? currentSession.pdfIds.map(p => typeof p === 'string' ? p : p._id)
+        : [])
+      : [];
+
+    if (currentIds.includes(pdfId)) return; // Already attached
+
+    const newIds = [...currentIds, pdfId];
+
     try {
-      const { data } = await api.patch(`/chat/sessions/${sessionId}`, { pdfId });
+      const { data } = await api.patch(`/chat/sessions/${sessionId}`, { pdfIds: newIds });
       setCurrentSession(data.session);
     } catch (_) {
       // ignore
     }
   };
 
-  const handleDetachPdf = async () => {
+  const handleDetachPdf = async (pdfId: string) => {
     if (!sessionId) {
-      setPendingPdfId(null);
+      setPendingPdfIds((prev) => prev.filter(id => id !== pdfId));
       return;
     }
+
+    // Get current IDs
+    const currentIds = currentSession?.pdfIds
+      ? (Array.isArray(currentSession.pdfIds)
+        ? currentSession.pdfIds.map(p => typeof p === 'string' ? p : p._id)
+        : [])
+      : [];
+
+    const newIds = currentIds.filter(id => id !== pdfId);
+
     try {
-      const { data } = await api.patch(`/chat/sessions/${sessionId}`, { pdfId: null });
+      const { data } = await api.patch(`/chat/sessions/${sessionId}`, { pdfIds: newIds });
       setCurrentSession(data.session);
     } catch (_) {
       // ignore
@@ -222,35 +255,52 @@ export default function Dashboard() {
     try {
       await api.delete(`/pdf/${pdfId}`);
       fetchPdfs();
-      if (currentSession?.pdfId && (typeof currentSession.pdfId === 'string' ? currentSession.pdfId : currentSession.pdfId._id) === pdfId) {
-        await handleDetachPdf();
+
+      const currentIds = currentSession?.pdfIds
+        ? (Array.isArray(currentSession.pdfIds)
+          ? currentSession.pdfIds.map(p => typeof p === 'string' ? p : p._id)
+          : [])
+        : [];
+
+      if (currentIds.includes(pdfId)) {
+        await handleDetachPdf(pdfId);
       }
     } catch (_) {
       // ignore
     }
   };
 
-  const attachedPdfId = currentSession?.pdfId
-    ? typeof currentSession.pdfId === 'object' && currentSession.pdfId !== null
-      ? (currentSession.pdfId as { _id: string })._id
-      : (currentSession.pdfId as string)
-    : null;
-  const attachedPdfName = currentSession?.pdfId && typeof currentSession.pdfId === 'object'
-    ? (currentSession.pdfId as { originalName: string }).originalName
-    : null;
-  const effectivePdfId = attachedPdfId ?? pendingPdfId;
-  const effectivePdfName = attachedPdfName ?? (effectivePdfId ? (pdfs.find((p) => p._id === effectivePdfId)?.originalName ?? null) : null);
+  const attachedPdfIds = currentSession?.pdfIds
+    ? (Array.isArray(currentSession.pdfIds)
+      ? currentSession.pdfIds.map(p => typeof p === 'string' ? p : p._id)
+      : [])
+    : [];
+
+  const attachedPdfNames = currentSession?.pdfIds
+    ? (Array.isArray(currentSession.pdfIds)
+      ? currentSession.pdfIds.map(p => typeof p === 'object' && p !== null && 'originalName' in p ? p.originalName : '')
+        .filter(Boolean)
+      : [])
+    : [];
+
+  const effectivePdfIds = sessionId ? attachedPdfIds : pendingPdfIds;
+
+  // Resolve names for pending IDs or loaded IDs if not populated
+  const effectivePdfNames = sessionId && attachedPdfNames.length === attachedPdfIds.length
+    ? attachedPdfNames
+    : effectivePdfIds.map(id => pdfs.find(p => p._id === id)?.originalName || 'Unknown PDF');
 
   return (
     <div className="flex h-screen overflow-hidden bg-[hsl(var(--background))]">
       <LeftSidebar
         sessions={sessions}
         pdfs={pdfs}
-        attachedPdfId={effectivePdfId}
-        attachedPdfName={effectivePdfName}
+        attachedPdfIds={effectivePdfIds}
+        attachedPdfNames={effectivePdfNames}
         onNewChat={handleNewChat}
         onUploadClick={() => setIsUploadOpen((v) => !v)}
         onDeleteSession={handleDeleteSession}
+        onToggleBookmark={handleToggleBookmark}
         onAttachPdf={handleAttachPdf}
         onDetachPdf={handleDetachPdf}
         onDeletePdf={handleDeletePdf}
@@ -269,7 +319,7 @@ export default function Dashboard() {
           onDismissError={() => setChatError(null)}
           mode={currentSession?.mode || 'syllabus'}
           pdfs={pdfs}
-          attachedPdfId={effectivePdfId}
+          attachedPdfIds={effectivePdfIds}
           onClearPdf={handleDetachPdf}
         />
       </main>

@@ -8,7 +8,7 @@ import ChatSession from '../models/ChatSession.js';
 export const getProjectHistory = async (req, res, next) => {
     try {
         const { mode } = req.query; // 'chat', 'fix', or 'optimize'
-        const validModes = ['chat', 'fix', 'optimize'];
+        const validModes = ['chat', 'fix', 'optimize', 'explain', 'feature'];
         const targetMode = validModes.includes(mode) ? mode : 'chat';
 
         const project = await IdeProject.findOne({ _id: req.params.id, user: req.user._id });
@@ -29,7 +29,7 @@ export const getProjectHistory = async (req, res, next) => {
 export const saveProjectHistory = async (req, res, next) => {
     try {
         const { role, content, model, mode } = req.body;
-        const validModes = ['chat', 'fix', 'optimize'];
+        const validModes = ['chat', 'fix', 'optimize', 'explain', 'feature'];
         const targetMode = validModes.includes(mode) ? mode : 'chat';
 
         const project = await IdeProject.findOne({ _id: req.params.id, user: req.user._id });
@@ -41,7 +41,7 @@ export const saveProjectHistory = async (req, res, next) => {
         let sessionId = project.sessions[targetMode];
         if (!sessionId) {
             const session = await ChatSession.create({
-                user: req.user._id,
+                userId: req.user._id,
                 title: `IDE: ${project.name} (${targetMode})`,
                 category: 'ide',
             });

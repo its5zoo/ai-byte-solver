@@ -126,16 +126,16 @@ export default function FileExplorer({
     };
 
     return (
-        <div className="flex flex-1 flex-col overflow-hidden bg-[#0a0f1e]" onClick={closeContextMenu}>
+        <div className="flex flex-1 flex-col overflow-hidden bg-[#0d1425]" onClick={closeContextMenu}>
             {/* Toolbar */}
-            <div className="flex items-center justify-between px-3 py-2 border-b border-white/5">
-                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-600">FILES</span>
+            <div className="flex items-center justify-between px-4 py-3 border-b ide-border bg-[#0a0f1e]/80">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Files</span>
                 <button
                     onClick={startCreate}
                     title="New File"
-                    className="flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-bold text-indigo-400 hover:bg-indigo-500/10 transition-all active:scale-95"
+                    className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-black uppercase tracking-widest text-indigo-400 hover:bg-indigo-500/10 transition-all active:scale-95 shadow-sm border border-transparent hover:border-indigo-500/20"
                 >
-                    <Plus className="h-3 w-3" />
+                    <Plus className="h-3.5 w-3.5" />
                     New
                 </button>
             </div>
@@ -176,10 +176,10 @@ export default function FileExplorer({
                         onContextMenu={(e) => handleContextMenu(e, file._id)}
                         onClick={() => renamingId !== file._id && onOpenFile(file)}
                         className={cn(
-                            'group relative flex items-center gap-2.5 px-3 py-2 cursor-pointer text-xs transition-all select-none mx-1 rounded-lg',
+                            'group relative flex items-center gap-3 px-4 py-2.5 cursor-pointer text-xs transition-all duration-300 select-none mx-2 rounded-xl mb-1 border',
                             activeFileId === file._id
-                                ? 'bg-indigo-500/10 text-white border border-indigo-500/20'
-                                : 'text-slate-400 hover:bg-white/[0.03] hover:text-slate-200 border border-transparent'
+                                ? 'bg-indigo-600/10 text-white border-indigo-500/40 shadow-lg shadow-indigo-600/5'
+                                : 'text-slate-400 hover:bg-white/[0.05] hover:text-slate-200 border-transparent hover:border-white/5'
                         )}
                     >
                         {/* Active indicator */}
@@ -207,21 +207,21 @@ export default function FileExplorer({
                             <span className="flex-1 min-w-0 truncate font-medium">{file.name}</span>
                         )}
 
-                        {/* Action buttons — always visible */}
-                        <div className="flex items-center gap-0.5 shrink-0 ml-auto">
+                        {/* Action buttons — visible on hover */}
+                        <div className="flex items-center gap-1 shrink-0 ml-auto opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                             <button
                                 onClick={(e) => { e.stopPropagation(); startRename(file); }}
-                                className="p-1 rounded text-slate-700 hover:text-slate-300 hover:bg-white/5 transition-all"
+                                className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-400 hover:bg-indigo-500/10 transition-all"
                                 title="Rename"
                             >
-                                <Edit2 className="h-3 w-3" />
+                                <Edit2 className="h-3.5 w-3.5" />
                             </button>
                             <button
                                 onClick={(e) => { e.stopPropagation(); onDeleteFile(file._id); }}
-                                className="p-1 rounded text-slate-700 hover:text-red-400 hover:bg-red-400/10 transition-all"
+                                className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-400/10 transition-all"
                                 title="Delete"
                             >
-                                <Trash2 className="h-3 w-3" />
+                                <Trash2 className="h-3.5 w-3.5" />
                             </button>
                         </div>
                     </div>

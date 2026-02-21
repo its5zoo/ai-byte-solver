@@ -9,7 +9,8 @@ import {
   Link as LinkIcon,
   Check,
   Link2,
-  X
+  X,
+  Star
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { cn } from '../../lib/utils';
@@ -19,6 +20,7 @@ interface SessionWithDate {
   _id: string;
   title: string;
   lastMessageAt?: string;
+  isBookmarked?: boolean;
 }
 
 interface PDFItem {
@@ -29,13 +31,14 @@ interface PDFItem {
 interface LeftSidebarProps {
   sessions: SessionWithDate[];
   pdfs: PDFItem[];
-  attachedPdfId: string | null;
-  attachedPdfName: string | null;
+  attachedPdfIds: string[];
+  attachedPdfNames: string[];
   onNewChat: () => void;
   onUploadClick: () => void;
   onDeleteSession: (id: string) => void;
+  onToggleBookmark: (id: string) => void;
   onAttachPdf: (pdfId: string) => void;
-  onDetachPdf: () => void;
+  onDetachPdf: (pdfId: string) => void;
   onDeletePdf: (pdfId: string) => void;
 }
 
@@ -45,11 +48,17 @@ function groupSessionsByDate(sessions: SessionWithDate[]) {
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
 
+  const bookmarked: SessionWithDate[] = [];
   const todayIds: string[] = [];
   const yesterdayIds: string[] = [];
   const older: SessionWithDate[] = [];
 
   sessions.forEach((s) => {
+    if (s.isBookmarked) {
+      bookmarked.push(s);
+      return; // Skip date grouping if it's bookmarked
+    }
+
     const d = s.lastMessageAt ? new Date(s.lastMessageAt) : new Date();
     d.setHours(0, 0, 0, 0);
     if (d.getTime() === today.getTime()) todayIds.push(s._id);
@@ -58,6 +67,7 @@ function groupSessionsByDate(sessions: SessionWithDate[]) {
   });
 
   return {
+    bookmarked,
     today: sessions.filter((s) => todayIds.includes(s._id)),
     yesterday: sessions.filter((s) => yesterdayIds.includes(s._id)),
     older: older,
@@ -67,11 +77,12 @@ function groupSessionsByDate(sessions: SessionWithDate[]) {
 export default function LeftSidebar({
   sessions,
   pdfs,
-  attachedPdfId,
-  attachedPdfName,
+  attachedPdfIds,
+  attachedPdfNames,
   onNewChat,
   onUploadClick,
   onDeleteSession,
+  onToggleBookmark,
   onAttachPdf,
   onDetachPdf,
   onDeletePdf,
@@ -114,6 +125,24 @@ export default function LeftSidebar({
         <span className="min-w-0 flex-1 truncate">{s.title || 'New Chat'}</span>
 
         <div className="flex items-center opacity-0 transition-opacity group-hover:opacity-100 ml-auto">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onToggleBookmark(s._id);
+            }}
+            className={cn(
+              "shrink-0 rounded p-1 mr-0.5",
+              s.isBookmarked
+                ? "text-amber-500 hover:bg-amber-100 hover:text-amber-600 dark:hover:bg-amber-500/20"
+                : "text-[hsl(var(--foreground-tertiary))] hover:bg-[hsl(var(--primary-light))] hover:text-amber-500"
+            )}
+            aria-label={s.isBookmarked ? "Remove Bookmark" : "Add Bookmark"}
+            title={s.isBookmarked ? "Remove Bookmark" : "Add Bookmark"}
+          >
+            <Star className={cn("h-3.5 w-3.5", s.isBookmarked && "fill-current")} />
+          </button>
           <button
             type="button"
             onClick={(e) => handleShare(e, s._id)}
@@ -175,21 +204,25 @@ export default function LeftSidebar({
           </button>
         </div>
 
-        {attachedPdfName && (
+        {attachedPdfNames.length > 0 && (
           <div className="rounded-xl border border-violet-200 bg-violet-50/80 p-2 dark:border-violet-800 dark:bg-violet-900/30 animate-fade-in-down">
-            <p className="mb-1.5 px-1 text-xs font-medium text-violet-700 dark:text-violet-300">Active Context</p>
-            <div className="flex items-center justify-between gap-1 rounded-lg bg-white px-2 py-1.5 dark:bg-slate-800 shadow-sm">
-              <span className="min-w-0 truncate text-xs font-medium text-slate-800 dark:text-slate-200" title={attachedPdfName}>
-                {attachedPdfName}
-              </span>
-              <button
-                type="button"
-                onClick={onDetachPdf}
-                className="shrink-0 rounded p-1 text-slate-500 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition-colors"
-                aria-label="Detach PDF"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
+            <p className="mb-1.5 px-1 text-xs font-medium text-violet-700 dark:text-violet-300">Active Context ({attachedPdfNames.length})</p>
+            <div className="space-y-1">
+              {attachedPdfNames.map((name, i) => (
+                <div key={i} className="flex items-center justify-between gap-1 rounded-lg bg-white px-2 py-1.5 dark:bg-slate-800 shadow-sm">
+                  <span className="min-w-0 truncate text-xs font-medium text-slate-800 dark:text-slate-200" title={name}>
+                    {name}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onDetachPdf(attachedPdfIds[i])}
+                    className="shrink-0 rounded p-1 text-slate-500 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition-colors"
+                    aria-label="Detach PDF"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -200,43 +233,46 @@ export default function LeftSidebar({
               Library
             </p>
             <ul className="space-y-1">
-              {pdfs.map((pdf) => (
-                <li
-                  key={pdf._id}
-                  className={cn(
-                    'flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm group',
-                    attachedPdfId === pdf._id ? 'bg-violet-100 dark:bg-violet-900/40' : 'hover:bg-slate-200/50 dark:hover:bg-slate-700/50'
-                  )}
-                >
-                  <FileText className="h-4 w-4 shrink-0 text-[hsl(var(--primary))]" />
-                  <span className="min-w-0 flex-1 truncate text-[hsl(var(--foreground-secondary))] font-medium" title={pdf.originalName}>
-                    {pdf.originalName}
-                  </span>
-                  <div className="flex shrink-0 gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      type="button"
-                      onClick={() => onAttachPdf(pdf._id)}
-                      className={cn(
-                        'rounded p-1',
-                        attachedPdfId === pdf._id
-                          ? 'bg-violet-500 text-white'
-                          : 'text-slate-500 hover:bg-violet-100 hover:text-violet-600 dark:hover:bg-violet-900/50 dark:hover:text-violet-400'
-                      )}
-                      title={attachedPdfId === pdf._id ? 'Active Context' : 'Link this PDF'}
-                    >
-                      <Link2 className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onDeletePdf(pdf._id)}
-                      className="rounded p-1 text-[hsl(var(--foreground-tertiary))] hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/40"
-                      title="Delete PDF"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </li>
-              ))}
+              {pdfs.map((pdf) => {
+                const isActive = attachedPdfIds.includes(pdf._id);
+                return (
+                  <li
+                    key={pdf._id}
+                    className={cn(
+                      'flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm group',
+                      isActive ? 'bg-violet-100 dark:bg-violet-900/40' : 'hover:bg-slate-200/50 dark:hover:bg-slate-700/50'
+                    )}
+                  >
+                    <FileText className="h-4 w-4 shrink-0 text-[hsl(var(--primary))]" />
+                    <span className="min-w-0 flex-1 truncate text-[hsl(var(--foreground-secondary))] font-medium" title={pdf.originalName}>
+                      {pdf.originalName}
+                    </span>
+                    <div className="flex shrink-0 gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        type="button"
+                        onClick={() => isActive ? onDetachPdf(pdf._id) : onAttachPdf(pdf._id)}
+                        className={cn(
+                          'rounded p-1',
+                          isActive
+                            ? 'bg-violet-500 text-white'
+                            : 'text-slate-500 hover:bg-violet-100 hover:text-violet-600 dark:hover:bg-violet-900/50 dark:hover:text-violet-400'
+                        )}
+                        title={isActive ? 'Remove from Context' : 'Add to Context'}
+                      >
+                        {isActive ? <Check className="h-3.5 w-3.5" /> : <Link2 className="h-3.5 w-3.5" />}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onDeletePdf(pdf._id)}
+                        className="rounded p-1 text-[hsl(var(--foreground-tertiary))] hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/40"
+                        title="Delete PDF"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         )}
@@ -245,6 +281,15 @@ export default function LeftSidebar({
           <p className="mb-2 px-2 text-[10px] font-black uppercase tracking-widest text-black dark:text-white">
             History
           </p>
+          {grouped.bookmarked.length > 0 && (
+            <div className="mb-3">
+              <p className="mb-1 flex items-center gap-1.5 px-2 text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500">
+                <Star className="h-3 w-3 fill-current" />
+                Saved
+              </p>
+              <div className="space-y-0.5">{renderList(grouped.bookmarked)}</div>
+            </div>
+          )}
           {grouped.today.length > 0 && (
             <>
               <p className="mb-1 px-2 text-xs text-slate-500 dark:text-slate-400">Today</p>

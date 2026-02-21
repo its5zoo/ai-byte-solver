@@ -155,6 +155,55 @@
     box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.6), 0 0 20px rgba(99, 102, 241, 0.15);
     transform: translateY(-4px);
   }
+
+  /* IDE Specific Tokens */
+  .ide-bg {
+    @apply bg-[#0f172a];
+  }
+
+  .ide-border {
+    @apply border-white/5;
+  }
+
+  .ide-glass {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .ide-card {
+    background: rgba(30, 41, 59, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(8px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .ide-card:hover {
+    background: rgba(30, 41, 59, 0.6);
+    border-color: rgba(99, 102, 241, 0.3);
+    box-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.5);
+  }
+
+  .ide-button-ghost {
+    @apply flex items-center gap-2 px-3 py-1.5 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all active:scale-95 text-[11px] font-bold uppercase tracking-wider;
+  }
+
+  .ide-button-primary {
+    @apply flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-white font-bold text-[11px] uppercase tracking-wider shadow-lg shadow-indigo-600/20 hover:bg-indigo-500 hover:scale-105 active:scale-95 transition-all;
+  }
+
+  .ide-tab {
+    @apply flex items-center gap-2.5 px-5 py-2.5 text-[11px] font-bold border-r border-white/5 whitespace-nowrap transition-all;
+  }
+
+  .ide-tab-active {
+    @apply bg-[#0f172a] text-white border-t-2 border-t-indigo-500;
+    box-shadow: inset 0 1px 10px rgba(99, 102, 241, 0.05);
+  }
+
+  .ide-tab-inactive {
+    @apply bg-transparent text-slate-400 hover:bg-white/[0.03] hover:text-slate-200;
+  }
 }
 
 /* ========================================

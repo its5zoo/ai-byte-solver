@@ -16,15 +16,22 @@ const chatSessionSchema = new mongoose.Schema(
       enum: ['syllabus', 'open'],
       default: 'syllabus',
     },
+    category: {
+      type: String,
+      default: 'general',
+    },
     aiProvider: {
       type: String,
-      enum: ['ollama'],
+      enum: ['ollama', 'deepseek'],
       default: 'ollama',
     },
-    pdfId: {
+    pdfIds: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: 'UploadedPDF',
-      default: null,
+    }],
+    isBookmarked: {
+      type: Boolean,
+      default: false,
     },
     lastMessageAt: {
       type: Date,
