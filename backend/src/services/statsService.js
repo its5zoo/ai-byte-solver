@@ -58,6 +58,7 @@ export const getTimeline = async (userId, range = 'week') => {
   let start;
   if (range === 'day') start = addDays(now, -1);
   else if (range === 'week') start = addDays(now, -7);
+  else if (range === 'year') start = addDays(now, -365);
   else start = addDays(now, -30);
 
   const stats = await LearningStatistics.find({

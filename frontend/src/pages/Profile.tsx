@@ -7,6 +7,7 @@ import {
   AccountInfoCard,
   LearningSummaryCard,
   ActivityProgressCard,
+  ActivityHeatmap,
   ThemePreferencesCard,
   ProfileActions,
 } from '../components/profile';
@@ -58,19 +59,20 @@ export default function Profile() {
   const [topics, setTopics] = useState<{ topic: string; count: number }[]>([]);
   const [quizPerformance, setQuizPerformance] = useState<QuizAttempt[]>([]);
   const [doubts, setDoubts] = useState<Doubt[]>([]);
+  const [yearlyTimeline, setYearlyTimeline] = useState<{ date: string; doubtsSolved: number; }[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadProfile = useCallback(async () => {
     try {
-      const [userRes, summaryRes, streakRes, topicsRes, quizRes, doubtsRes] = await Promise.all([
+      const [userRes, summaryRes, streakRes, topicsRes, quizRes, doubtsRes, timelineRes] = await Promise.all([
         api.get('/users/me'),
         api.get('/stats/summary'),
         api.get('/streaks'),
         api.get('/stats/topics'),
-        api.get('/stats/topics'),
         api.get('/stats/quiz'),
         // @ts-ignore
         api.getTopDoubts(10),
+        api.get('/stats/timeline?range=year')
       ]);
       setFullUser(userRes.data.user || null);
       setSummary(summaryRes.data.summary || null);
@@ -79,6 +81,7 @@ export default function Profile() {
       setQuizPerformance(quizRes.data.performance || []);
       // @ts-ignore
       setDoubts(doubtsRes?.data?.doubts || []);
+      setYearlyTimeline(timelineRes.data.timeline || []);
     } catch {
       setFullUser(null);
     } finally {
@@ -192,6 +195,8 @@ export default function Profile() {
             recentTopic={topics[0]?.topic}
             lastQuizScore={quizPerformance[0]?.percentage ?? null}
           />
+
+          {yearlyTimeline.length > 0 && <ActivityHeatmap timeline={yearlyTimeline} />}
 
           {doubts.length > 0 && (
             <div className="glass rounded-2xl border border-[hsl(var(--glass-border))] p-6 shadow-sm">
