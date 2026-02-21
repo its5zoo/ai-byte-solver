@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Send, Loader2, HelpCircle, Sparkles, FileText, X } from 'lucide-react';
+
+import { Send, Loader2, Sparkles, FileText, X } from 'lucide-react';
 import Button from '../ui/Button';
 import MessageBubble from './MessageBubble';
 import { cn } from '../../lib/utils';
@@ -305,18 +305,6 @@ export default function ChatPanel({
                 )}
               </Button>
             </div>
-
-            {/* Quiz button */}
-            <Link
-              to={sessionId ? `/chat/${sessionId}/quiz` : '/chat'}
-              className={cn(
-                'flex shrink-0 items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-violet-700 px-6 py-3 font-medium text-white shadow-md shadow-violet-500/30 transition-all hover:shadow-lg hover:shadow-violet-500/40 hover:scale-105 active:scale-95',
-                !sessionId && 'opacity-50 pointer-events-none'
-              )}
-            >
-              <HelpCircle className="h-5 w-5" />
-              <span className="hidden sm:inline">Start Quiz</span>
-            </Link>
           </div>
 
           {/* Helper text */}

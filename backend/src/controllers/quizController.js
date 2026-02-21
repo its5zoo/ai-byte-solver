@@ -1,7 +1,7 @@
 import Quiz from '../models/Quiz.js';
 import QuizAttempt from '../models/QuizAttempt.js';
 import LearningStatistics from '../models/LearningStatistics.js';
-import { generateQuiz, evaluateAttempt } from '../services/quizService.js';
+import { generateQuiz, generateCustomQuiz, evaluateAttempt } from '../services/quizService.js';
 import { recordActivity } from '../services/streakService.js';
 import { AppError } from '../middleware/errorHandler.js';
 
@@ -17,6 +17,36 @@ export const generate = async (req, res, next) => {
     if (!sessionId) throw new AppError('sessionId required', 422, 'VALIDATION_ERROR');
 
     const quiz = await generateQuiz(req.user.id, sessionId, count, difficulty);
+
+    res.status(201).json({
+      success: true,
+      quiz: {
+        id: quiz._id,
+        title: quiz.title,
+        difficulty: quiz.difficulty,
+        questions: quiz.questions.map((q) => ({
+          id: q._id,
+          type: q.type,
+          question: q.question,
+          options: q.options,
+          topic: q.topic,
+          difficulty: q.difficulty,
+        })),
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const generateCustom = async (req, res, next) => {
+  try {
+    const { subject, topic, level, count = 5, mode = 'chat' } = req.body;
+    if (!subject || !topic || !level) {
+      throw new AppError('Subject, topic, and level are required', 422, 'VALIDATION_ERROR');
+    }
+
+    const quiz = await generateCustomQuiz(req.user.id, { subject, topic, level, count, mode });
 
     res.status(201).json({
       success: true,

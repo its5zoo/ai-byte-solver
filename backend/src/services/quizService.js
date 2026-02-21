@@ -7,7 +7,7 @@ import Quiz from '../models/Quiz.js';
 import { AppError } from '../middleware/errorHandler.js';
 
 const OLLAMA_BASE = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'deepseek-v3.1:671b-cloud';
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'gpt-oss:120b-cloud';
 
 const callOllama = async (prompt) => {
   const url = `${OLLAMA_BASE}/api/chat`;
@@ -117,6 +117,91 @@ function normalizeQuestions(raw, wantCount) {
   }
   return out;
 }
+
+export const generateCustomQuiz = async (userId, { subject, topic, level, count = 5, mode = 'chat' }) => {
+  let modeInstructions = '';
+  if (mode === 'general') {
+    modeInstructions = `- Validation: FIRST, evaluate if the Topic "${topic}" is reasonably related to the Subject "${subject}". If they are completely unrelated (e.g. Subject: Physics, Topic: Shakespeare), you MUST return only this JSON object: { "error": "Your topic and subject are unrelated" }`;
+  }
+
+  const prompt = `You are an expert examiner. Create a specialized quiz based on the following parameters:
+Subject: ${subject}
+Topic: ${topic}
+Difficulty Level: ${level}
+Quantity: ${count} MCQs
+
+Requirements:
+${modeInstructions}
+- Structure: Exactly ${count} MCQ questions.
+- Style: Professional exam-style questions (like JEE, NEET, or SAT).
+- Options: Exactly 4 options per question.
+- Correctness: Only one correct option.
+- Explanations: Provide a clear 2-3 line explanation for each answer.
+- Formatting: Use LaTeX delimiters \\( ... \\) for inline math and \\[ ... \\] for block math.
+- JSON Only: Output only a JSON array (or the error object if validation fails). No preamble or post-text.
+
+Format:
+[
+  {
+    "type": "mcq",
+    "question": "...",
+    "options": ["A", "B", "C", "D"],
+    "correctOption": 0,
+    "topic": "${topic}",
+    "difficulty": "${level}",
+    "explanation": "..."
+  }
+]`;
+
+  let raw = '';
+  let questions = [];
+  let lastErrorCheck = null;
+
+  // Add retry loop since local model might truncate or scramble JSON sometimes
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      raw = await callOllama(prompt);
+
+      // Check if AI returned the error object for unrelated topics
+      const errorCheckStr = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+      let errorCheck = null;
+      try {
+        errorCheck = JSON.parse(errorCheckStr);
+      } catch (err) { }
+
+      if (errorCheck && errorCheck.error) {
+        lastErrorCheck = errorCheck.error;
+        break; // Stop retrying if the AI explicitly stated they are unrelated
+      }
+
+      questions = normalizeQuestions(raw, count);
+      if (questions.length > 0) {
+        break; // Success!
+      }
+    } catch (err) {
+      if (attempt === 2) throw err;
+    }
+  }
+
+  if (lastErrorCheck) {
+    throw new AppError(lastErrorCheck, 400, 'UNRELATED_TOPIC');
+  }
+
+  if (!questions.length) throw new AppError('Failed to generate quiz. AI returned invalid format.', 500, 'QUIZ_GENERATION_FAILED');
+
+  const quiz = await Quiz.create({
+    userId,
+    title: `${subject}: ${topic} (${level})`,
+    difficulty: level,
+    questions: questions.map((q) => ({
+      ...q,
+      difficulty: level,
+      topic: topic || q.topic
+    })),
+  });
+
+  return quiz;
+};
 
 
 export const generateQuiz = async (userId, sessionId, count = 5, difficulty = 'easy') => {

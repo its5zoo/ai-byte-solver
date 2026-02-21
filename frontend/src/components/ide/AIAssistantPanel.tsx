@@ -10,7 +10,6 @@ import api from '../../lib/api';
 
 const MODELS: AiModel[] = [
     'gpt-oss:120b-cloud',
-    'DeepSeek-v3.1:671b-cloud',
 ];
 
 const MODES: { id: AiMode; icon: React.FC<any>; label: string; color: string; desc: string }[] = [
@@ -154,8 +153,8 @@ export default function AIAssistantPanel({ files, activeFile, onCreateFile }: AI
             let finalNewFile = data.newFile || null;
             let finalCodePatch = data.codePatch || null;
 
-            // Failsafe: If the AI suggests a new file that has the exact same name as the active file,
-            // treat it as a codePatch to the active file instead of trying to create a duplicate.
+            // If AI suggests a whole new file content while we have an active file and names match,
+            // or if we just want to apply it to the active file, codePatch is used.
             if (finalNewFile && activeFile && finalNewFile.name.toLowerCase() === activeFile.name.toLowerCase()) {
                 finalCodePatch = finalNewFile.content;
                 finalNewFile = null;
@@ -197,7 +196,7 @@ export default function AIAssistantPanel({ files, activeFile, onCreateFile }: AI
             const isOllamaModel = !selectedModel?.toLowerCase().includes('deepseek');
             const hint = isOllamaModel
                 ? `Make sure **Ollama** is running with the \`${selectedModel}\` model.`
-                : `Make sure your **DeepSeek API key** is valid in \`.env\` (DEEPSEEK_API_KEY).`;
+                : `Make sure your **Cloud API key** is valid in \`.env\`.`;
             setMessages((prev) => [...prev, {
                 id: `err-${Date.now()}`,
                 role: 'assistant',
@@ -212,16 +211,15 @@ export default function AIAssistantPanel({ files, activeFile, onCreateFile }: AI
     useEffect(() => {
         const handler = (e: CustomEvent) => {
             const { errorOutput } = e.detail;
-            setPrompt(`Fix this error:\n${errorOutput}`);
-            setAiMode('fix');
+            if (!errorOutput) return;
             handleSend(
-                `Fix this runtime error:\n\`\`\`\n${errorOutput}\n\`\`\``,
+                `The terminal reported an error. Please analyze and fix it:\n\`\`\`\n${errorOutput}\n\`\`\``,
                 'fix'
             );
         };
         window.addEventListener('terminal:error', handler as EventListener);
         return () => window.removeEventListener('terminal:error', handler as EventListener);
-    }, [activeFile, files, handleSend, setAiMode]);
+    }, [handleSend]);
 
     const handleApplyPatch = (msgId: string, patch: string) => {
         const { activeTabId, updateTabContent } = useIdeStore.getState();

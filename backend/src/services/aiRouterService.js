@@ -37,7 +37,16 @@ File Targeting Logic:
   - If they MATCH (e.g., asked for a C program and a .c file is active), output the code in \`codePatch\` to insert it into the active file.
   - If they DO NOT MATCH, or if there is no active file, output the code in the \`newFile\` object to suggest creating a new file.
 
-• Encouraging Closing: Always end with a polite and motivating tip or a friendly "Happy coding!" message.`;
+• Encouraging Closing: Always end with a polite and motivating tip or a friendly "Happy coding!" message.
+
+STRICT CONTEXT RULES:
+1. You MUST only answer questions related to the ACTIVE FILE. 
+2. If the user asks a question that is clearly for a different programming language than the ACTIVE FILE (e.g., asking for Python code while editing a .c file), you MUST:
+   - Identify the mismatch.
+   - Politely tell the user something like: "It looks like you're asking about [Target Language], but your current file is in [Active Language]. Please switch the file language using the dropdown at the top first, and I'll be happy to help!"
+   - DO NOT provide any code or explanation for the wrong language.
+3. If the student asks a general question, try to relate it back to the active code.
+4. If there is NO active file, politely ask the student to open or create a file first.`;
 
     const modePrompts = {
         chat: `${base}
@@ -250,7 +259,7 @@ export async function routeAiRequest({ projectFiles, activeFile, userPrompt, ter
 
     if (!rawContent) {
         const errorList = errors.map(e => `• ${e}`).join('\n');
-        throw new Error(`All AI services failed:\n${errorList}`);
+        throw new Error(`AI model "gpt-oss:120b-cloud" failed to respond. Please ensure Ollama is running and the model is pulled.\n\nErrors:\n${errorList}`);
     }
 
     // Parse response — handle various model output formats

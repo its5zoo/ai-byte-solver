@@ -9,9 +9,7 @@ import Profile from './pages/Profile';
 import QuizPage from './pages/QuizPage';
 import IDEPage from './pages/IDEPage';
 import IDEHistory from './pages/IDEHistory';
-import MockTestDashboard from './pages/MockTestDashboard';
-import MockTestRunner from './pages/MockTestRunner';
-import MockTestResult from './pages/MockTestResult'; function ProtectedRoute({ children }: { children: React.ReactNode }) {
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token);
   if (!token) return <Navigate to="/login" replace />;
   return <>{children}</>;
@@ -66,6 +64,14 @@ export default function App() {
           }
         />
         <Route
+          path="/quiz/:quizId"
+          element={
+            <ProtectedRoute>
+              <QuizPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/profile"
           element={
             <ProtectedRoute>
@@ -95,30 +101,6 @@ export default function App() {
           element={
             <ProtectedRoute>
               <IDEHistory />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/mock-tests"
-          element={
-            <ProtectedRoute>
-              <MockTestDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/mock-tests/:id/take"
-          element={
-            <ProtectedRoute>
-              <MockTestRunner />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/mock-tests/:id/result"
-          element={
-            <ProtectedRoute>
-              <MockTestResult />
             </ProtectedRoute>
           }
         />

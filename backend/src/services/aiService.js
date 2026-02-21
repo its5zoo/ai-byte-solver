@@ -4,7 +4,7 @@
 import UploadedPDF from '../models/UploadedPDF.js';
 
 const OLLAMA_BASE = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'deepseek-v3.1:671b-cloud';
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'gpt-oss:120b-cloud';
 
 const BASE_SYSTEM = `You are AI Byte Solver, a world-class academic AI tutor designed to help students master their subjects. 
 

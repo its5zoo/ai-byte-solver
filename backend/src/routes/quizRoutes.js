@@ -7,6 +7,7 @@ const router = Router();
 router.use(protect);
 
 router.post('/generate', quizController.generate);
+router.post('/custom-generate', quizController.generateCustom);
 router.get('/attempts', quizController.listAttempts);
 router.get('/:id', quizController.getQuiz);
 router.post('/:id/attempt', quizController.submitAttempt);

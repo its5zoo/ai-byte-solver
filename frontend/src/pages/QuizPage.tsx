@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { HelpCircle, Trophy, ChevronLeft, MessageSquare, CheckCircle2, XCircle } from 'lucide-react';
 import Button from '../components/ui/Button';
@@ -143,7 +143,7 @@ interface Quiz {
 }
 
 export default function QuizPage() {
-  const { sessionId } = useParams<{ sessionId: string }>();
+  const { sessionId, quizId } = useParams<{ sessionId?: string; quizId?: string }>();
   const [step, setStep] = useState<'generate' | 'quiz' | 'result'>('generate');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -235,7 +235,7 @@ export default function QuizPage() {
   const isLastQuestion = quiz && currentQuestion === quiz.questions.length - 1;
   const allAnswered = quiz && quiz.questions.every(q => answers[q.id] !== undefined);
 
-  if (!sessionId) {
+  if (!sessionId && !quizId && step === 'generate') {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[hsl(var(--background))] p-4 transition-all">
         <HelpCircle className="h-16 w-16 text-violet-600 dark:text-violet-400" />
@@ -252,17 +252,53 @@ export default function QuizPage() {
     );
   }
 
+  // Effect to load an existing quiz if accessed directly via URL (from QuizBox)
+  useEffect(() => {
+    const loadQuizFromUrl = async () => {
+      if (quizId) {
+        try {
+          setLoading(true);
+          const { data } = await api.get(`/quiz/${quizId}`);
+          if (data.quiz) {
+            let q = data.quiz;
+            if (q.questions) {
+              q.questions = q.questions
+                .filter((qu: QuizQuestion) => qu.type === 'mcq')
+                .map((qu: { _id?: string; id?: string;[key: string]: unknown }) => ({
+                  ...qu,
+                  id: (qu._id ?? qu.id ?? '') as string,
+                }));
+            }
+            setQuiz(q);
+            setStep('quiz');
+            setAnswers({});
+            setCurrentQuestion(0);
+          }
+        } catch (err) {
+          setError('Failed to load quiz.');
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+    if (step === 'generate' && quizId) {
+      loadQuizFromUrl();
+    }
+  }, [quizId, step]);
+
   return (
     <div className="min-h-screen bg-[hsl(var(--background))]">
       <div className="mx-auto max-w-3xl px-4 py-8">
         {/* Back button */}
-        <Link
-          to={`/chat/${sessionId}`}
-          className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-[hsl(var(--foreground-tertiary))] hover:text-[hsl(var(--primary))] transition-colors"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          Back to Chat
-        </Link>
+        {(sessionId || quiz) && (
+          <Link
+            to={sessionId ? `/chat/${sessionId}` : '/chat'}
+            className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-[hsl(var(--foreground-tertiary))] hover:text-[hsl(var(--primary))] transition-colors"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            {sessionId ? 'Back to Chat' : 'Back to Dashboard'}
+          </Link>
+        )}
 
         {/* Generate step */}
         {step === 'generate' && (

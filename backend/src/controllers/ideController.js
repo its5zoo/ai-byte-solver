@@ -68,10 +68,14 @@ export const saveProjectHistory = async (req, res, next) => {
 
 export const updateProjectState = async (req, res, next) => {
     try {
-        const { lastOpenFileId } = req.body;
+        const { lastOpenFileId, language } = req.body;
+        const update = {};
+        if (lastOpenFileId !== undefined) update.lastOpenFileId = lastOpenFileId;
+        if (language !== undefined) update.language = language;
+
         const project = await IdeProject.findOneAndUpdate(
             { _id: req.params.id, user: req.user._id },
-            { $set: { lastOpenFileId } },
+            { $set: update },
             { new: true }
         );
         if (!project) return res.status(404).json({ error: { message: 'Project not found' } });
@@ -97,10 +101,15 @@ export const createProject = async (req, res, next) => {
         let { name, description, language } = req.body;
         if (!name?.trim()) return res.status(400).json({ error: { message: 'Project name is required' } });
 
-        // Auto-detect language from the project name if it has an extension
+        // Default to 'text' (txt) unless specified/detected
         const nameStr = name.trim();
         const detectedLang = detectLanguage(nameStr);
-        const resolvedLang = language || (detectedLang !== 'text' ? detectedLang : 'javascript');
+        let resolvedLang = language || detectedLang;
+
+        // If it was detected as 'text' or not specified, force 'c' as default
+        if (resolvedLang === 'text' || !resolvedLang) {
+            resolvedLang = 'c';
+        }
 
         const project = await IdeProject.create({
             user: req.user._id,
@@ -109,6 +118,7 @@ export const createProject = async (req, res, next) => {
             language: resolvedLang,
         });
 
+        /* 
         // Create a starter file matching the project language
         const ext = languageToExt(resolvedLang);
         // If project name has extension use it as filename, otherwise make index.<ext>
@@ -123,6 +133,7 @@ export const createProject = async (req, res, next) => {
             content: getBoilerplate(resolvedLang),
             language: resolvedLang,
         });
+        */
 
         res.status(201).json({ project });
     } catch (err) {
@@ -217,7 +228,25 @@ export const updateFile = async (req, res, next) => {
                 if (newLang !== 'text') update.language = newLang;
             }
         }
-        if (language !== undefined) update.language = language;
+        if (language !== undefined) {
+            update.language = language;
+
+            // AUTOMATIC EXTENSION UPDATE
+            // If the user changed the language, we should update the filename extension
+            // unless the user also provided a NEW name in the same request
+            if (name === undefined) {
+                const currentFile = await IdeFile.findOne({ _id: req.params.fid, project: project._id });
+                if (currentFile) {
+                    const currentName = currentFile.name;
+                    const baseName = currentName.includes('.') ? currentName.substring(0, currentName.lastIndexOf('.')) : currentName;
+                    const newExt = languageToExt(language);
+                    const newName = `${baseName}.${newExt}`;
+
+                    update.name = newName;
+                    update.path = `/${newName}`;
+                }
+            }
+        }
 
         const file = await IdeFile.findOneAndUpdate(
             { _id: req.params.fid, project: project._id },

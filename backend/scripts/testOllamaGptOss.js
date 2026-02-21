@@ -9,7 +9,7 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 
 async function verifyOllama() {
     const url = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
-    const model = process.env.OLLAMA_MODEL || 'deepseek-v3.1:671b-cloud';
+    const model = process.env.OLLAMA_MODEL || 'gpt-oss:120b-cloud';
 
     console.log(`--- Ollama Test Case ---`);
     console.log(`URL: ${url}`);
@@ -33,7 +33,7 @@ async function verifyOllama() {
         } else {
             const data = await res.json();
             console.log('Response:', data.message?.content);
-            console.log('\nSUCCESS: DeepSeek is responding through Ollama!');
+            console.log(`\nSUCCESS: ${model} is responding through Ollama!`);
         }
     } catch (err) {
         console.error('Connection failed:', err.message);

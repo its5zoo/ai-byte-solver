@@ -1,9 +1,10 @@
 import { BarChart3, TrendingUp, LineChart, HelpCircle, GraduationCap } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import api from '../../lib/api';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
+import Button from '../ui/Button';
 import { cn } from '../../lib/utils';
+import QuizModal from '../ui/QuizModal';
 
 interface Summary {
   doubtsSolved: number;
@@ -50,6 +51,9 @@ export default function RightSidebar({ summary, streak, timeline: _timeline, top
   const streakDays = streak?.currentStreak ?? 0;
 
   const [doubts, setDoubts] = useState<Doubt[]>([]);
+
+  // Quiz Modal State
+  const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
 
   useEffect(() => {
     // @ts-ignore
@@ -187,19 +191,24 @@ export default function RightSidebar({ summary, streak, timeline: _timeline, top
           </Card>
         </div>
 
-        <Link to="/mock-tests" className="block mt-4 mb-2">
-          <Card className="overflow-hidden bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 transition-all shadow-lg hover:shadow-violet-500/25 border-none group transform hover:-translate-y-0.5">
-            <CardContent className="flex items-center gap-4 p-5">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm group-hover:scale-110 transition-transform">
-                <GraduationCap className="h-6 w-6" />
-              </div>
-              <div>
-                <h4 className="text-base font-black text-white tracking-tight drop-shadow-sm mb-0.5">Mock Test Portal</h4>
-                <p className="text-[11px] font-bold uppercase tracking-widest text-white/70">Take PYQ Exams</p>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
+        {/* Quiz Button */}
+        <Button
+          variant="primary"
+          onClick={() => setIsQuizModalOpen(true)}
+          className="w-full mt-4 mb-2 py-6 rounded-2xl shadow-md border-2 border-violet-500/20 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold group relative overflow-hidden"
+        >
+          <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+          <span className="relative z-10 flex items-center justify-center gap-3 text-sm">
+            <GraduationCap className="h-5 w-5" />
+            Practice Quiz
+          </span>
+        </Button>
+
+        <QuizModal
+          isOpen={isQuizModalOpen}
+          onClose={() => setIsQuizModalOpen(false)}
+          topics={topics}
+        />
 
         {(summary?.doubtsSolved === 0 && summary?.quizAttempts === 0) || (!summary && topics.length === 0) ? (
           <p className="text-center text-xs text-slate-500 dark:text-slate-400">

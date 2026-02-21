@@ -35,7 +35,7 @@ export interface RecentFileEntry {
 }
 
 export type AiMode = 'chat' | 'fix' | 'explain' | 'optimize' | 'feature';
-export type AiModel = 'gpt-oss:120b-cloud' | 'DeepSeek-v3.1:671b-cloud';
+export type AiModel = 'gpt-oss:120b-cloud';
 
 interface IdeState {
     // Projects
@@ -193,11 +193,8 @@ export const useIdeStore = create<IdeState>()(
         }),
         {
             name: 'ide-state',
-            partialize: (s) => ({
-                selectedModel: s.selectedModel,
-                sidebarCollapsed: s.sidebarCollapsed,
-                // Don't persist tabs/project across sessions to avoid stale data
-            }),
+            // Do not persist anything to ensure fresh session every time
+            partialize: (_s) => ({}),
         }
     )
 );
