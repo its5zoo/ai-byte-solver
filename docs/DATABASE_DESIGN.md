@@ -79,7 +79,7 @@
 |-------|------|-------|-------|
 | _id | ObjectId | PK | |
 | userId | ObjectId | ref User | Required |
-| sessionId | ObjectId | ref ChatSession | Optional |
+| sessionId | ObjectId | ref ChatSession | Optional (Null if generated via General Mode) |
 | title | String | - | "Quiz - Physics Ch 2" |
 | difficulty | String | - | "mixed" \| "easy" \| "medium" \| "hard" |
 | questions | Array | - | See QuizQuestion sub-schema |

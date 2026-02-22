@@ -19,6 +19,15 @@ The app uses **Ollama** (local AI) for chat and quiz. No cloud API keys required
 - Detects difficulty level (easy/medium/hard)
 - Can generate summaries and formula lists
 
+### 3. IDE Co-Pilot Mode (Coding Workspace)
+- Focuses entirely on debugging, code explanation, and writing logic.
+- Analyzes provided code snippets and stack traces.
+- Enforces best-practices for languages like Python, C++, and Java.
+
+### 4. PYQ Extraction Mode
+- Analyzes PDF attachments solely to locate strings that look like "Previous Year Questions" or "Important Diagram Markers".
+- Returns an aggregated summary of heavily repeated topics.
+
 ---
 
 ## System Prompt Template
@@ -85,6 +94,8 @@ Use ONLY the above content to answer. Cite: "From {pdfName}, {chapter/topic}: ..
 2. **PDF context** loaded when mode is syllabus and session has `pdfId`
 3. **System prompt** built dynamically based on mode and context
 4. **Refusal** when syllabus mode + question not in PDF → explicit refusal message
+5. **Quiz Modifiers** When generating quizzes, additional prompt requirements instruct the AI to build strictly correct JSON format to be parsed internally.
+6. **General Quiz Validation** When verifying Random quizzes via `General Mode`, the prompt instructs the AI to *first* validate if the User's provided "Subject" and "Topic" are relevant. If they are logically disconnected (e.g. Physics and Shakespeare), it returns a hardcoded error JSON block.
 
 ---
 

@@ -22,10 +22,10 @@ Ollama runs the model locally.
 
 ### Pull and run your model
 
-By default this project expects a model called **gpt-oss:120b-cloud** (or a compatible proxy). If you are using Ollama directly, pull and run a model that matches the name you configure:
+By default this project expects a model called **gpt-oss:120b-cloud** (a cloud remote model). If you are using Ollama, you do not need to pull it. Just login and run:
 
 ```bash
-ollama pull gpt-oss:120b-cloud
+ollama login
 ollama run gpt-oss:120b-cloud
 ```
 
@@ -118,8 +118,9 @@ in `frontend/.env` (create the file if needed).
 1. **MongoDB** – running (local or Atlas).
 2. **Ollama**:
    ```bash
-   ollama pull llama3.2
-   ollama serve   # or just leave Ollama app running
+   ollama login
+   ollama run gpt-oss:120b-cloud
+   # or just leave Ollama app running with the cloud connection
    ```
 3. **Backend**:
    ```bash
@@ -141,10 +142,15 @@ Open **http://localhost:5173**, register/login. Chat and quiz use **Ollama** (en
 
 ## 6. Project Modules
 
-- **IDE Workspace**: Write, compile, and execute code within the browser. The IDE comes with a dynamic file explorer and resizable panels.
+- **IDE Workspace**: A full-featured in-browser code editor.
+  - Supports live execution of **C, C++, Python, Java, and JavaScript** via the external Piston API.
+  - Features an integrated AI panel to debug code and explain concepts on the fly.
+  - Includes a dynamic file explorer to manage project files.
 - **PDF Upload & Context**: Use **Upload PDF** in the chat sidebar. Files are stored and parsed so the AI can ground its answers in your specific syllabus.
 - **PYQ Analysis**: Inside the chat, one-click analysis queries the document for Previous Year Questions strings or important diagrams.
-- **Quiz Generation**: From the right sidebar, click **Practice Quiz** to open the Quiz Modal. Select **Chat Mode** to generate tests based on your recent conversations, or **General Mode** for broad topics (the AI will actively validate if your selected subject and topic match).
+- **Quiz Generation**: From the right sidebar, click **Practice Quiz** to open the Quiz Box Modal. 
+  - **Chat Mode**: Generates tests based strictly on the topics from your recent conversations.
+  - **General Mode**: Generates a custom quiz for any broad topic. The AI will actively validate whether your selected "Subject" and "Topic" are related before creating the quiz.
 
 ---
 
@@ -152,7 +158,7 @@ Open **http://localhost:5173**, register/login. Chat and quiz use **Ollama** (en
 
 | Issue | What to check |
 |-------|----------------|
-| “Ollama error” / no AI reply | Run `ollama pull gpt-oss:120b-cloud` then `ollama run gpt-oss:120b-cloud` (or whatever you set as `OLLAMA_MODEL`). Backend `.env`: `OLLAMA_BASE_URL`, `OLLAMA_MODEL`. 404 = model not found. |
+| “Ollama error” / no AI reply | Ensure you are logged in (`ollama login`) then try `ollama run gpt-oss:120b-cloud`. Check Backend `.env`: `OLLAMA_BASE_URL`, `OLLAMA_MODEL`. 404 = model not found/offline. |
 | PDF upload fails / “No file uploaded” | Backend running; no proxy stripping `multipart/form-data`. Try a PDF &lt; 25 MB. |
 | CORS / network errors | `FRONTEND_URL` in backend `.env` matches the URL you use for the frontend (e.g. `http://localhost:5173`). |
 | DB errors | MongoDB running; `MONGODB_URI` correct in backend `.env`. |

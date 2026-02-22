@@ -15,6 +15,7 @@ frontend/
 │   ├── components/         # Reusable UI components
 │   │   ├── ui/             # ShadCN/Radix base components
 │   │   ├── chat/           # Chat-specific components
+│   │   ├── ide/            # IDE layout, code editor, terminal, AI panel
 │   │   ├── analytics/      # Charts, stats widgets
 │   │   ├── layout/         # Sidebar, header, panels
 │   │   └── forms/          # Upload, settings forms
@@ -39,6 +40,7 @@ frontend/
 |--------|----------------|
 | `components/ui` | Base design system (Button, Card, Input, etc.) |
 | `components/chat` | Message bubbles, typing indicator, math rendering |
+| `components/ide` | Code editor (Monaco), local terminal output, specialized AI panel |
 | `components/analytics` | Charts, streak widget, topic coverage |
 | `components/layout` | Sidebar, dashboard panels, responsive layout |
 | `hooks` | Data fetching, auth, theme, scroll memory |
@@ -59,9 +61,10 @@ backend/
 │   ├── models/             # Mongoose schemas
 │   ├── routes/             # API route definitions
 │   ├── services/           # Business logic
-│   │   ├── ai/             # AI prompts, mode logic, streaming
+│   │   ├── ai/             # AI prompts, mode logic, streaming, PYQ extraction
 │   │   ├── pdf/            # PDF parse, text extraction
-│   │   └── quiz/           # Quiz generation, evaluation
+│   │   ├── ide/            # Piston API execution helpers (if applicable)
+│   │   └── quiz/           # Quiz generation, General mode validations, scoring
 │   ├── utils/              # Helpers, validators
 │   └── app.js              # Express app setup
 ├── uploads/                # Temporary PDF storage (or use cloud)
@@ -77,10 +80,10 @@ backend/
 | `controllers` | HTTP req/res handling, validation, service calls |
 | `middleware` | JWT verify, rate limit, file upload, error handler |
 | `models` | User, ChatSession, ChatMessage, PDF, Quiz, etc. |
-| `routes` | REST endpoints grouped by domain |
-| `services/ai` | System prompts, syllabus grounding, mode switching |
+| `routes` | REST endpoints grouped by domain (auth, chat, pdf, quiz, ide) |
+| `services/ai` | System prompts, syllabus grounding, mode switching, PYQ extraction |
 | `services/pdf` | Multer handling, pdf-parse, text extraction |
-| `services/quiz` | MCQ/short-answer generation, scoring |
+| `services/quiz` | MCQ/short-answer generation, General and Chat mode validations |
 
 ---
 

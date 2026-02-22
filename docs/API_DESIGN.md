@@ -109,15 +109,16 @@ Base URL: `/api/v1`
 
 | Method | Path | Description |
 |--------|------|-------------|
-| POST | `/quiz/generate` | Generate quiz from session |
+| POST | `/quiz/generate` | Generate quiz from session strict mode |
+| POST | `/quiz/custom-generate` | Generate quiz via Chat or General mode |
 | GET | `/quiz/:id` | Get quiz questions |
 | POST | `/quiz/:id/attempt` | Submit attempt |
 | GET | `/quiz/attempts` | List user attempts |
 
-**POST /quiz/generate**
+**POST /quiz/custom-generate**
 ```json
 // Request
-{ "sessionId", "count": 5, "difficulty": "mixed" | "easy" | "medium" | "hard" }
+{ "subject": "Physics", "topic": "Thermodynamics", "level": "medium", "count": 5, "mode": "chat" | "general" }
 
 // Response 201
 { "quizId", "questions": [...] }
@@ -130,6 +131,23 @@ Base URL: `/api/v1`
 
 // Response 200
 { "score", "total", "correctCount", "details": [...] }
+```
+
+---
+
+## IDE Workspace
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/ide/execute` | Execute code using Piston API |
+
+**POST /ide/execute**
+```json
+// Request
+{ "language": "python", "version": "3.10.0", "files": [{ "name": "main.py", "content": "print('hello')" }] }
+
+// Response 200
+{ "run": { "stdout": "hello", "stderr": "", "code": 0 } }
 ```
 
 ---
