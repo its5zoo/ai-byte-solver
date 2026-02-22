@@ -139,11 +139,12 @@ Open **http://localhost:5173**, register/login. Chat and quiz use **Ollama** (en
 
 ---
 
-## 6. PDF upload and database
+## 6. Project Modules
 
-- **Upload**: Use **Upload PDF** in the sidebar → **Browse** or drag-and-drop (max **25 MB**).
-- **Storage**: Files are saved under `backend/uploads/` and metadata (filename, size, extracted text, topics) is stored in MongoDB (`UploadedPDF`).
-- **Usage**: In **Syllabus Mode**, the app uses the text extracted from your PDFs to answer; upload at least one PDF for syllabus-grounded answers.
+- **IDE Workspace**: Write, compile, and execute code within the browser. The IDE comes with a dynamic file explorer and resizable panels.
+- **PDF Upload & Context**: Use **Upload PDF** in the chat sidebar. Files are stored and parsed so the AI can ground its answers in your specific syllabus.
+- **PYQ Analysis**: Inside the chat, one-click analysis queries the document for Previous Year Questions strings or important diagrams.
+- **Quiz Generation**: From the right sidebar, click **Practice Quiz** to open the Quiz Modal. Select **Chat Mode** to generate tests based on your recent conversations, or **General Mode** for broad topics (the AI will actively validate if your selected subject and topic match).
 
 ---
 
