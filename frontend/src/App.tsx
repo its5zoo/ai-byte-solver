@@ -9,6 +9,7 @@ import Profile from './pages/Profile';
 import QuizPage from './pages/QuizPage';
 import IDEPage from './pages/IDEPage';
 import IDEHistory from './pages/IDEHistory';
+import VideoLearning from './pages/VideoLearning';
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token);
   if (!token) return <Navigate to="/login" replace />;
@@ -101,6 +102,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <IDEHistory />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/video-learning"
+          element={
+            <ProtectedRoute>
+              <VideoLearning />
             </ProtectedRoute>
           }
         />

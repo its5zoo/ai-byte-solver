@@ -208,12 +208,11 @@ export function processAIResponse(text: string): string {
   // Remove --- horizontal rules
   html = html.replace(/^---+$/gm, '<hr class="my-3 border-slate-300 dark:border-slate-600"/>');
 
-  // Images ![alt](url)
-  // Allows optional whitespace/newlines and captures any URL string robustly, encoding it to fix unescaped spaces
-  html = html.replace(/!\[(.*?)\]\s*\((.*?)\)/g, (_match, alt, url) => {
-    const safeUrl = url.trim().replace(/ /g, '%20');
-    return `<img src="${safeUrl}" alt="${alt}" class="my-4 w-full max-w-md rounded-2xl shadow-lg border border-[hsl(var(--glass-border))] object-cover object-center bg-slate-900/50" loading="lazy" />`;
-  });
+  // Images ![alt](url) - DISABLED
+  // html = html.replace(/!\[(.*?)\]\s*\((.*?)\)/g, (_match, alt, url) => {
+  //   const safeUrl = url.trim().replace(/ /g, '%20');
+  //   return `<img src="${safeUrl}" alt="${alt}" class="my-4 w-full max-w-md rounded-2xl shadow-lg border border-[hsl(var(--glass-border))] object-cover object-center bg-slate-900/50" loading="lazy" />`;
+  // });
 
   // Links [text](url)
   html = html.replace(/(?<!!)\[(.*?)\]\s*\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-violet-500 hover:text-violet-600 dark:text-violet-400 dark:hover:text-violet-300 underline underline-offset-2 transition-colors">$1</a>');

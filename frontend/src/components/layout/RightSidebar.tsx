@@ -1,5 +1,6 @@
-import { BarChart3, TrendingUp, LineChart, HelpCircle, GraduationCap } from 'lucide-react';
+import { BarChart3, TrendingUp, LineChart, HelpCircle, GraduationCap, PlayCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../lib/api';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import Button from '../ui/Button';
@@ -40,6 +41,7 @@ const WEEK_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
 
 export default function RightSidebar({ summary, streak, timeline: _timeline, topics }: RightSidebarProps) {
+  const navigate = useNavigate();
   const maxTopicCount = Math.max(1, ...topics.map((t) => t.count));
   const topTopics = topics.slice(0, 5).map((t) => ({
     ...t,
@@ -192,17 +194,30 @@ export default function RightSidebar({ summary, streak, timeline: _timeline, top
         </div>
 
         {/* Quiz Button */}
-        <Button
-          variant="primary"
-          onClick={() => setIsQuizModalOpen(true)}
-          className="w-full mt-4 mb-2 py-6 rounded-2xl shadow-md border-2 border-violet-500/20 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold group relative overflow-hidden"
-        >
-          <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-          <span className="relative z-10 flex items-center justify-center gap-3 text-sm">
-            <GraduationCap className="h-5 w-5" />
-            Practice Quiz
-          </span>
-        </Button>
+        <div className="flex flex-col gap-2 mt-4 mb-2">
+          <Button
+            variant="primary"
+            onClick={() => setIsQuizModalOpen(true)}
+            className="w-full py-5 rounded-2xl shadow-md border-2 border-violet-500/20 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold group relative overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+            <span className="relative z-10 flex items-center justify-center gap-3 text-sm">
+              <GraduationCap className="h-5 w-5" />
+              Practice Quiz
+            </span>
+          </Button>
+
+          <Button
+            onClick={() => navigate('/video-learning')}
+            className="w-full py-5 rounded-2xl shadow-md border-2 border-rose-500/20 bg-gradient-to-r from-rose-600 to-orange-600 hover:from-rose-500 hover:to-orange-500 text-white font-bold group relative overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+            <span className="relative z-10 flex items-center justify-center gap-3 text-sm">
+              <PlayCircle className="h-5 w-5" />
+              Video Learning
+            </span>
+          </Button>
+        </div>
 
         <QuizModal
           isOpen={isQuizModalOpen}

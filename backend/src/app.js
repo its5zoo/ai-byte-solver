@@ -11,6 +11,7 @@ import userRoutes from './routes/userRoutes.js';
 import doubtRoutes from './routes/doubtRoutes.js';
 import ideRoutes from './routes/ideRoutes.js';
 import aiRouterRoutes from './routes/aiRouterRoutes.js';
+import videoRoutes from './routes/videoRoutes.js';
 
 const app = express();
 
@@ -45,6 +46,7 @@ app.use('/api/v1/streaks', streakRoutes);
 app.use('/api/v1/doubts', doubtRoutes);
 app.use('/api/v1/ide', ideRoutes);
 app.use('/api/v1/ai-router', aiRouterRoutes);
+app.use('/api/v1/videos', videoRoutes);
 
 
 app.get('/health', (req, res) => res.json({ ok: true }));
