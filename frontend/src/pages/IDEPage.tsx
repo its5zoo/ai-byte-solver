@@ -10,6 +10,28 @@ import Terminal from '../components/ide/Terminal';
 import { useIdeStore } from '../stores/ideStore';
 import api from '../lib/api';
 import { AILogo } from '../components/ui/AILogo';
+const BOILERPLATES: Record<string, string> = {
+    c: '#include <stdio.h>\n\nint main() {\n    printf("Hello World!\\n");\n    return 0;\n}',
+    cpp: '#include <iostream>\n\nint main() {\n    std::cout << "Hello World!" << std::endl;\n    return 0;\n}',
+    python: 'print("Hello World!")',
+    javascript: 'console.log("Hello World!");',
+    typescript: 'console.log("Hello World!");',
+    java: 'public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello World!");\n    }\n}',
+    markdown: '# Hello World\nStart writing your notes here...',
+};
+
+const getExt = (id: string) => {
+    switch (id) {
+        case 'javascript': return 'js';
+        case 'typescript': return 'ts';
+        case 'python': return 'py';
+        case 'cpp': return 'cpp';
+        case 'c': return 'c';
+        case 'java': return 'java';
+        case 'markdown': return 'md';
+        default: return 'txt';
+    }
+};
 
 export default function IDEPage() {
     const navigate = useNavigate();
@@ -26,6 +48,10 @@ export default function IDEPage() {
     const [isLoadingProject, setIsLoadingProject] = useState(false);
     const [terminalOpen, setTerminalOpen] = useState(true);
     const [langMenuOpen, setLangMenuOpen] = useState(false);
+
+    // Scratchpad state for when no project is open
+    const [scratchLang, setScratchLang] = useState('c');
+    const [scratchContent, setScratchContent] = useState(BOILERPLATES['c']);
 
     const effectiveProjectId = projectId || activeProjectId;
 
@@ -94,20 +120,33 @@ export default function IDEPage() {
     };
 
     const activeTab = openTabs.find((t) => t.fileId === activeTabId);
-    const activeFile = files.find((f) => f._id === activeTabId);
+    let activeFile = files.find((f) => f._id === activeTabId);
+
+    if (!effectiveProjectId) {
+        // If there is no project, provide a mock active file for the scratchpad
+        activeFile = {
+            _id: 'scratchpad',
+            name: `main.${getExt(scratchLang)}`,
+            content: scratchContent,
+            language: scratchLang,
+        };
+    }
 
     const languages = [
-        { id: 'c', label: 'C' },
-        { id: 'cpp', label: 'C++' },
-        { id: 'javascript', label: 'JavaScript' },
-        { id: 'typescript', label: 'TypeScript' },
-        { id: 'python', label: 'Python' },
-        { id: 'java', label: 'Java' },
-        { id: 'markdown', label: 'Markdown' },
+        { id: 'c', label: 'C', icon: '📝' },
+        { id: 'cpp', label: 'C++', icon: '⚡' },
+        { id: 'python', label: 'Python', icon: '🐍' },
+        { id: 'javascript', label: 'JavaScript', icon: 'JS' },
     ];
 
     const handleLanguageChange = async (lang: string) => {
-        if (!effectiveProjectId) return;
+        if (!effectiveProjectId) {
+            // Memory-only Scratchpad edit
+            setScratchLang(lang);
+            setScratchContent(BOILERPLATES[lang] || '');
+            return;
+        }
+
         try {
             if (activeTabId) {
                 // Update specific file
@@ -115,7 +154,7 @@ export default function IDEPage() {
                 setFiles((prev) => prev.map((f) => f._id === activeTabId ? data.file : f));
                 renameTab(activeTabId, data.file.name, lang);
             } else {
-                // Update project default language (for Direct Entry mode)
+                // Update project default language
                 await api.put(`/ide/projects/${effectiveProjectId}/state`, { language: lang });
                 setProject((prev: any) => ({ ...prev, language: lang }));
             }
@@ -123,6 +162,19 @@ export default function IDEPage() {
             console.error('Language change failed', err);
         }
     };
+
+    useEffect(() => {
+        // Global shortcut listener for executing code
+        const handleGlobalKeyDown = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                window.dispatchEvent(new CustomEvent('ide:run'));
+            }
+        };
+
+        window.addEventListener('keydown', handleGlobalKeyDown);
+        return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+    }, []);
 
     return (
         <div className="flex h-screen w-screen overflow-hidden bg-[#0f172a] text-white">
@@ -134,45 +186,44 @@ export default function IDEPage() {
                         <Panel defaultSize={75} minSize={20} className="flex flex-col overflow-hidden bg-[#0f172a]">
                             {/* Header */}
                             <div className="flex items-center border-b border-[#1e293b] bg-[#0a0f1e] min-h-[48px] shrink-0">
-                                {effectiveProjectId && (
-                                    <div className="relative border-r border-[#1e293b]">
-                                        <button
-                                            onClick={() => setLangMenuOpen(!langMenuOpen)}
-                                            className="flex items-center gap-2 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-indigo-400 hover:text-indigo-300 transition-colors active:scale-95"
-                                        >
-                                            {languages.find(l => l.id === (activeTab?.language || project?.language || 'text'))?.label || 'Text'}
-                                            <ChevronDown className={cn("h-3 w-3 transition-transform", langMenuOpen ? "rotate-180" : "")} />
-                                        </button>
+                                <div className="relative border-r border-[#1e293b]">
+                                    <button
+                                        onClick={() => setLangMenuOpen(!langMenuOpen)}
+                                        className="flex items-center gap-2 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-indigo-400 hover:text-indigo-300 transition-colors active:scale-95"
+                                    >
+                                        {languages.find(l => l.id === (activeFile?.language || 'text'))?.label || 'Text'}
+                                        <ChevronDown className={cn("h-3 w-3 transition-transform", langMenuOpen ? "rotate-180" : "")} />
+                                    </button>
 
-                                        {langMenuOpen && (
-                                            <>
-                                                <div className="fixed inset-0 z-40" onClick={() => setLangMenuOpen(false)} />
-                                                <div className="absolute top-full left-0 mt-1 w-48 bg-[#0a0f1e] border border-[#1e293b] rounded-xl shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                                                    {languages.map(l => (
-                                                        <button
-                                                            key={l.id}
-                                                            onClick={() => {
-                                                                handleLanguageChange(l.id);
-                                                                setLangMenuOpen(false);
-                                                            }}
-                                                            className={cn(
-                                                                "w-full text-left px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition-colors",
-                                                                (activeTab?.language || project?.language || 'text') === l.id
-                                                                    ? "text-indigo-400 bg-indigo-500/5"
-                                                                    : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
-                                                            )}
-                                                        >
-                                                            {l.label}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </>
-                                        )}
-                                    </div>
-                                )}
+                                    {langMenuOpen && (
+                                        <>
+                                            <div className="fixed inset-0 z-40" onClick={() => setLangMenuOpen(false)} />
+                                            <div className="absolute top-full left-0 mt-1 w-48 bg-[#0a0f1e] border border-[#1e293b] rounded-xl shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                                                {languages.map(l => (
+                                                    <button
+                                                        key={l.id}
+                                                        onClick={() => {
+                                                            handleLanguageChange(l.id);
+                                                            setLangMenuOpen(false);
+                                                        }}
+                                                        className={cn(
+                                                            "w-full text-left px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition-colors",
+                                                            (activeFile?.language || 'text') === l.id
+                                                                ? "text-indigo-400 bg-indigo-500/5"
+                                                                : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                                                        )}
+                                                    >
+                                                        {l.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
 
-                                <div className="px-4 text-[11px] font-bold text-slate-400 truncate">
-                                    {project?.name || ''} {activeTab ? ` / ${activeTab.name}` : ''}
+                                <div className="px-4 text-[11px] font-bold text-slate-400 flex items-center gap-2 truncate">
+                                    {project?.name || ''} {activeFile?.name ? ` / ${activeFile.name}` : ''}
+                                    {!effectiveProjectId && <span className="bg-emerald-500/10 text-emerald-500 px-1.5 border border-emerald-500/20 py-0.5 rounded text-[9px] uppercase tracking-widest ml-2">Scratchpad</span>}
                                 </div>
 
                                 <div className="flex-1" />
@@ -213,49 +264,31 @@ export default function IDEPage() {
                                         <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
                                     </div>
                                 ) : !effectiveProjectId ? (
-                                    <NoProjectState />
-                                ) : !activeTab ? (
                                     <div className="flex h-full flex-col bg-[#0f172a]">
-                                        <div className="flex-1 p-4">
-                                            {(() => {
-                                                const currentLangId = project?.language || 'c';
-                                                const currentLang = languages.find(l => l.id === currentLangId);
-                                                const getExt = (id: string) => {
-                                                    switch (id) {
-                                                        case 'javascript': return 'js';
-                                                        case 'typescript': return 'ts';
-                                                        case 'python': return 'py';
-                                                        case 'cpp': return 'cpp';
-                                                        case 'c': return 'c';
-                                                        case 'java': return 'java';
-                                                        case 'markdown': return 'md';
-                                                        default: return 'txt';
-                                                    }
-                                                };
-                                                const ext = getExt(currentLangId);
-
-                                                return (
-                                                    <textarea
-                                                        className="w-full h-full bg-transparent text-slate-300 font-mono text-sm resize-none outline-none placeholder:text-slate-600"
-                                                        placeholder={`// Start writing your ${currentLang?.label || 'C'} code here...\n// AI will automatically save this as index.${ext}`}
-                                                        onChange={(e) => {
-                                                            const content = e.target.value;
-                                                            if (content.trim().length > 0) {
-                                                                handleCreateFile(`index.${ext}`, content);
-                                                            }
-                                                        }}
-                                                    />
-                                                );
-                                            })()}
+                                        <div className="flex-1">
+                                            <CodeEditor
+                                                key={`scratch-${scratchLang}`}
+                                                fileId="scratchpad"
+                                                language={scratchLang}
+                                                content={scratchContent}
+                                                onChange={(content) => setScratchContent(content)}
+                                                onSave={() => null} // Scratchpad is ephemeral
+                                            />
                                         </div>
-                                        <div className="px-6 py-4 border-t border-white/5 bg-white/[0.02] flex items-center justify-between">
-                                            <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-                                                <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
-                                                Direct Writing Mode Active
+                                        <div className="px-6 py-4 border-t border-white/5 bg-white/[0.02] flex items-center justify-between z-10">
+                                            <div className="flex items-center gap-2 text-[10px] uppercase font-bold tracking-widest text-slate-500">
+                                                <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" />
+                                                Scratchpad Active
                                             </div>
-                                            <p className="text-[10px] text-slate-600 uppercase tracking-widest font-bold">Your code will be saved automatically</p>
+                                            <div className="flex items-center gap-4">
+                                                <p className="text-[10px] text-slate-400">Press <span className="font-mono bg-white/10 text-white rounded px-1.5 py-0.5 mx-0.5 border border-white/10">Ctrl+Enter</span> to Run Code.</p>
+                                                <div className="h-3 w-px bg-[#1e293b]"></div>
+                                                <button onClick={() => setLangMenuOpen(true)} className="text-[10px] uppercase font-bold tracking-widest text-indigo-400 hover:text-indigo-300">Save to Project ↗</button>
+                                            </div>
                                         </div>
                                     </div>
+                                ) : !activeTab ? (
+                                    <NoProjectState />
                                 ) : (
                                     <CodeEditor
                                         key={activeTab.fileId}

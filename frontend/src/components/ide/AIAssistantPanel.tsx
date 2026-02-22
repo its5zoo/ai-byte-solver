@@ -153,9 +153,9 @@ export default function AIAssistantPanel({ files, activeFile, onCreateFile }: AI
             let finalNewFile = data.newFile || null;
             let finalCodePatch = data.codePatch || null;
 
-            // If AI suggests a whole new file content while we have an active file and names match,
-            // or if we just want to apply it to the active file, codePatch is used.
-            if (finalNewFile && activeFile && finalNewFile.name.toLowerCase() === activeFile.name.toLowerCase()) {
+            // Strict override: Never allow newFile if we have an active file.
+            // If the AI somehow returned a newFile, convert it to a codePatch for the active file.
+            if (finalNewFile && activeFile) {
                 finalCodePatch = finalNewFile.content;
                 finalNewFile = null;
             }

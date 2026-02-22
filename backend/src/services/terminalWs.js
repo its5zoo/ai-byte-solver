@@ -11,7 +11,7 @@ import { join } from 'path';
 import { tmpdir } from 'os';
 import jwt from 'jsonwebtoken';
 
-const ALLOWED_LANGUAGES = ['javascript', 'python', 'typescript', 'cpp', 'c', 'java'];
+const ALLOWED_LANGUAGES = ['javascript', 'python', 'typescript', 'cpp', 'c'];
 const TIMEOUT_MS = 50000; // 50 second execution timeout
 
 export function initTerminalWs(httpServer) {
@@ -54,6 +54,19 @@ export function initTerminalWs(httpServer) {
             if (activeProcess && activeProcess.stdin && !activeProcess.stdin.destroyed) {
                 try {
                     activeProcess.stdin.write(data);
+
+                    // Reset timeout to 10 seconds upon receiving input
+                    if (timeoutHandle) {
+                        clearTimeout(timeoutHandle);
+                    }
+                    timeoutHandle = setTimeout(() => {
+                        if (activeProcess) {
+                            activeProcess.kill('SIGTERM');
+                            socket.emit('output', { type: 'error', data: '\n⚠ Execution timed out (No input received within 10s)\n' });
+                            socket.emit('run:complete', { success: false });
+                            activeProcess = null;
+                        }
+                    }, 10000); // 10 seconds extension
                 } catch (err) {
                     console.warn('[Terminal WS] stdin write failed:', err.message);
                 }
@@ -95,7 +108,6 @@ export function initTerminalWs(httpServer) {
             if (language === 'python') ext = 'py';
             else if (language === 'cpp') ext = 'cpp';
             else if (language === 'c') ext = 'c';
-            else if (language === 'java') ext = 'java';
 
             const tempId = `run_${Date.now()}`;
             const tempFile = join(sandboxDir, `${tempId}.${ext}`);
@@ -135,9 +147,6 @@ export function initTerminalWs(httpServer) {
                 runProcess(socket, 'powershell', ['-Command', fullCmd], tempFile, language, content, () => {
                     try { if (existsSync(outFile)) unlinkSync(outFile); } catch { }
                 });
-            } else if (language === 'java') {
-                const fullCmd = `javac "${tempFile}" && java -cp "${sandboxDir}" ${tempId}`;
-                runProcess(socket, 'powershell', ['-Command', fullCmd], tempFile, language, content);
             } else if (language === 'python') {
                 runProcess(socket, 'python', ['-u', tempFile], tempFile, language, content);
             } else {
@@ -150,8 +159,12 @@ export function initTerminalWs(httpServer) {
             let errorOutput = '';
 
             try {
+                // Inject the Microsoft OpenJDK path into the environment variable
+                // so the user doesn't have to restart their command prompt.
+                const augmentedPath = (process.env.PATH || '') + ';C:\\Program Files\\Microsoft\\jdk-21.0.10.7-hotspot\\bin';
+
                 activeProcess = spawn(cmd, args, {
-                    env: { ...process.env, NODE_PATH: undefined },
+                    env: { ...process.env, PATH: augmentedPath, NODE_PATH: undefined },
                     shell: cmd === 'powershell',
                     stdio: ['pipe', 'pipe', 'pipe'], // stdin, stdout, stderr all piped
                 });
@@ -203,15 +216,15 @@ export function initTerminalWs(httpServer) {
                     activeProcess = null;
                 });
 
-                // Timeout
+                // Initial Timeout (25 seconds)
                 timeoutHandle = setTimeout(() => {
                     if (activeProcess) {
                         activeProcess.kill('SIGTERM');
-                        sock.emit('output', { type: 'error', data: '\n⚠ Execution timed out (30s limit)\n' });
+                        sock.emit('output', { type: 'error', data: '\n⚠ Execution timed out (25s limit reached)\n' });
                         sock.emit('run:complete', { success: false });
                         activeProcess = null;
                     }
-                }, TIMEOUT_MS);
+                }, 25000);
 
             } catch (spawnErr) {
                 sock.emit('output', { type: 'error', data: `\n✗ Spawn error: ${spawnErr.message}\n` });

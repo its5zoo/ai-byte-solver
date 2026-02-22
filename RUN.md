@@ -143,14 +143,15 @@ Open **http://localhost:5173**, register/login. Chat and quiz use **Ollama** (en
 ## 6. Project Modules
 
 - **IDE Workspace**: A full-featured in-browser code editor.
-  - Supports live execution of **C, C++, Python, Java, and JavaScript** via the external Piston API.
-  - Features an integrated AI panel to debug code and explain concepts on the fly.
+  - Supports live execution of **C, C++, Python, Java, and JavaScript** via **local host compilation**. The machine running the backend **MUST** have the respective compilers (`gcc`, `javac`, `python`, `node`) installed in its PATH for execution to work.
+  - Features an integrated AI panel to debug code and apply **inline code patches** seamlessly.
+  - Includes an interactive scratchpad that auto-selects appropriate starter boilerplate.
   - Includes a dynamic file explorer to manage project files.
 - **PDF Upload & Context**: Use **Upload PDF** in the chat sidebar. Files are stored and parsed so the AI can ground its answers in your specific syllabus.
 - **PYQ Analysis**: Inside the chat, one-click analysis queries the document for Previous Year Questions strings or important diagrams.
 - **Quiz Generation**: From the right sidebar, click **Practice Quiz** to open the Quiz Box Modal. 
-  - **Chat Mode**: Generates tests based strictly on the topics from your recent conversations.
-  - **General Mode**: Generates a custom quiz for any broad topic. The AI will actively validate whether your selected "Subject" and "Topic" are related before creating the quiz.
+  - Generates custom 5-question tests for any specific **Subject** and **Topic**. 
+  - The AI actively validates whether your selected Subject and Topic logically correlate before generating the quiz.
 
 ---
 

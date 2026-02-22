@@ -110,6 +110,14 @@ export default function Terminal({ activeFile }: TerminalProps) {
         setTimeout(() => inputRef.current?.focus(), 200);
     }, [activeFile, isRunning, addLine]);
 
+    useEffect(() => {
+        const handler = () => {
+            handleRun();
+        };
+        window.addEventListener('ide:run', handler);
+        return () => window.removeEventListener('ide:run', handler);
+    }, [handleRun]);
+
     const handleKill = useCallback(() => {
         if (!socketRef.current || !isRunning) return;
         socketRef.current.emit('kill');
